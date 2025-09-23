@@ -1,9 +1,14 @@
-const TRACKED_TOKENS = [
-  { mint: "EyiVQN5W1s2z3DPrbZnQuxyzQBPpzvc1inyScUxxpump" },
-  { mint: "3sLSDYfmbu5ZdmC7wbBUzvwRFE6S1dtrTUafuhhApump" },
-  { mint: "2GX27q7vmNSUx7P3Xpu9HfD7KP8VZXqGcPcK7bxpump" },
-  { mint: "Bk8bozHooHNkUDaeXqydtA3NpUuDavhKqBHD3a6Xpump" }
+
+const DEFAULT_MINTS = [
+  "EyiVQN5W1s2z3DPrbZnQuxyzQBPpzvc1inyScUxxpump",
+  "3sLSDYfmbu5ZdmC7wbBUzvwRFE6S1dtrTUafuhhApump",
+  "2GX27q7vmNSUx7P3Xpu9HfD7KP8VZXqGcPcK7bxpump",
+  "Bk8bozHooHNkUDaeXqydtA3NpUuDavhKqBHD3a6Xpump"
 ];
+
+const STORAGE_KEY = "solana-token-favs:mints";
+const MINT_PATTERN = /[1-9A-HJ-NP-Za-km-z]{32,}/g;
+const SINGLE_MINT_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,}$/;
 
 const TOKEN_INFO_API = "https://lite-api.jup.ag/tokens/v2/search";
 const TOKEN_PRICE_API = "https://lite-api.jup.ag/price/v3";
@@ -15,9 +20,18 @@ const template = document.getElementById("token-card-template");
 const refreshButton = document.getElementById("refresh-button");
 const refreshSelect = document.getElementById("refresh-select");
 const lastUpdated = document.getElementById("last-updated");
+const mintForm = document.getElementById("mint-form");
+const mintInput = document.getElementById("mint-input");
+const mintFeedback = document.getElementById("mint-feedback");
+const toastRoot = document.getElementById("toast-root");
 
 let refreshTimerId = null;
 const previousPrices = new Map();
+let trackedMints = loadTrackedMints();
+let latestSnapshot = [];
+let feedbackTimerId = null;
+let toastTimerId = null;
+let activeToast = null;
 
 function chunk(array, size) {
   const result = [];
@@ -25,6 +39,104 @@ function chunk(array, size) {
     result.push(array.slice(i, i + size));
   }
   return result;
+}
+
+function getStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    return window.localStorage;
+  } catch (error) {
+    console.warn("\u65e0\u6cd5\u8bbf\u95ee localStorage\uff0c\u5c06\u4e0d\u4f1a\u6301\u4e45\u5316\u6536\u85cf\u3002", error);
+    return null;
+  }
+}
+
+function isLikelyMint(value) {
+  return typeof value === "string" && SINGLE_MINT_PATTERN.test(value.trim());
+}
+
+function loadTrackedMints() {
+  const storage = getStorage();
+  if (!storage) {
+    return [...DEFAULT_MINTS];
+  }
+
+  try {
+    const raw = storage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return [...DEFAULT_MINTS];
+    }
+
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const deduped = [];
+      for (const value of parsed) {
+        if (!isLikelyMint(value)) continue;
+        const mint = value.trim();
+        if (!deduped.includes(mint)) {
+          deduped.push(mint);
+        }
+      }
+      return deduped;
+    }
+  } catch (error) {
+    console.warn("\u8bfb\u53d6\u672c\u5730\u6536\u85cf\u5931\u8d25\uff0c\u4f7f\u7528\u9ed8\u8ba4\u5217\u8868\u3002", error);
+  }
+
+  return [...DEFAULT_MINTS];
+}
+
+function saveTrackedMints(mints) {
+  const storage = getStorage();
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(mints));
+  } catch (error) {
+    console.warn("\u4fdd\u5b58\u6536\u85cf\u5217\u8868\u5931\u8d25\u3002", error);
+  }
+}
+
+function extractMints(text) {
+  if (!text) return [];
+  const matches = text.match(MINT_PATTERN) ?? [];
+  const normalized = matches
+    .map((value) => value.trim())
+    .filter(isLikelyMint);
+  return Array.from(new Set(normalized));
+}
+
+function showFeedback(message, status = "info") {
+  if (!mintFeedback) return;
+  if (feedbackTimerId) {
+    clearTimeout(feedbackTimerId);
+  }
+
+  mintFeedback.textContent = message;
+  mintFeedback.dataset.status = status;
+  mintFeedback.hidden = false;
+
+  feedbackTimerId = setTimeout(() => {
+    mintFeedback.textContent = "";
+    mintFeedback.dataset.status = "";
+    mintFeedback.hidden = true;
+    feedbackTimerId = null;
+  }, 4000);
+}
+
+function clearFeedback() {
+  if (!mintFeedback) return;
+  if (feedbackTimerId) {
+    clearTimeout(feedbackTimerId);
+    feedbackTimerId = null;
+  }
+  mintFeedback.textContent = "";
+  mintFeedback.dataset.status = "";
+  mintFeedback.hidden = true;
 }
 
 async function fetchTokenInfos(mints) {
@@ -35,7 +147,7 @@ async function fetchTokenInfos(mints) {
 
     const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error(`获取 Token 基础信息失败: ${response.status}`);
+      throw new Error(`\u83b7\u53d6 Token \u57fa\u7840\u4fe1\u606f\u5931\u8d25: ${response.status}`);
     }
 
     const data = await response.json();
@@ -54,7 +166,7 @@ async function fetchTokenPrices(mints) {
 
     const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error(`获取 Token 价格失败: ${response.status}`);
+      throw new Error(`\u83b7\u53d6 Token \u4ef7\u683c\u5931\u8d25: ${response.status}`);
     }
 
     const data = await response.json();
@@ -89,28 +201,143 @@ function formatPercent(value) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
-function buildAuditList(audit) {
-  if (!audit) return [];
-  const result = [];
-  if (audit.mintAuthorityDisabled != null) {
-    result.push(`Mint Authority ${audit.mintAuthorityDisabled ? "已禁用" : "未禁用"}`);
+function formatMintPreview(mint) {
+  if (!mint) return "--";
+  if (mint.length <= 10) return mint;
+  return `${mint.slice(0, 6)}...${mint.slice(-4)}`;
+}
+
+function showToast(message, status = "info") {
+  if (!toastRoot) return;
+
+  if (toastTimerId) {
+    clearTimeout(toastTimerId);
+    toastTimerId = null;
   }
-  if (audit.freezeAuthorityDisabled != null) {
-    result.push(`Freeze Authority ${audit.freezeAuthorityDisabled ? "已禁用" : "未禁用"}`);
+
+  if (activeToast) {
+    activeToast.classList.remove("visible");
+    activeToast.addEventListener(
+      "transitionend",
+      () => {
+        if (activeToast && activeToast.parentElement) {
+          activeToast.remove();
+        }
+      },
+      { once: true }
+    );
+    activeToast = null;
   }
-  if (audit.topHoldersPercentage != null) {
-    result.push(`前十大持币占比 ${audit.topHoldersPercentage.toFixed(2)}%`);
+
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.dataset.status = status;
+  toast.textContent = message;
+  toastRoot.appendChild(toast);
+  activeToast = toast;
+
+  requestAnimationFrame(() => {
+    toast.classList.add("visible");
+  });
+
+  toastTimerId = setTimeout(() => {
+    toast.classList.remove("visible");
+    toast.addEventListener(
+      "transitionend",
+      () => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      },
+      { once: true }
+    );
+    activeToast = null;
+    toastTimerId = null;
+  }, 3200);
+}
+
+async function copyMintToClipboard(mint) {
+  if (!mint) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(mint);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = mint;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+    const label = formatMintPreview(mint);
+    showToast(`\u5df2\u590d\u5236 ${label}`, "success");
+  } catch (error) {
+    console.error("\u590d\u5236 mint \u5931\u8d25", error);
+    showToast("\u590d\u5236\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5", "error");
   }
-  if (audit.devBalancePercentage != null) {
-    result.push(`开发者持币占比 ${(audit.devBalancePercentage * 100).toFixed(4)}%`);
+}
+
+function addTrackedMints(newMints) {
+  if (!newMints.length) {
+    showFeedback("\u672a\u8bc6\u522b\u5230\u6709\u6548 mint \u5730\u5740\u3002", "error");
+    return { added: 0, duplicates: 0 };
   }
-  if (audit.devMigrations != null) {
-    result.push(`开发者迁移次数 ${audit.devMigrations}`);
+
+  const uniqueNew = [];
+  const duplicates = [];
+
+  for (const mint of newMints) {
+    if (trackedMints.includes(mint)) {
+      duplicates.push(mint);
+    } else {
+      uniqueNew.push(mint);
+    }
   }
-  if (audit.highSingleOwnership != null) {
-    result.push(`单一地址高持币：${audit.highSingleOwnership ? "是" : "否"}`);
+
+  if (!uniqueNew.length) {
+    showFeedback("\u8fd9\u4e9b mint \u5df2\u7ecf\u5728\u5173\u6ce8\u5217\u8868\u4e2d\u4e86\u3002", "info");
+    return { added: 0, duplicates: duplicates.length };
   }
-  return result;
+
+  trackedMints = [...uniqueNew, ...trackedMints];
+  saveTrackedMints(trackedMints);
+
+  for (const mint of uniqueNew) {
+    previousPrices.delete(mint);
+  }
+
+  const addedText = `\u5df2\u6dfb\u52a0 ${uniqueNew.length} \u4e2a Token\u3002`;
+  const message = duplicates.length
+    ? `${addedText} \u5ffd\u7565 ${duplicates.length} \u4e2a\u91cd\u590d\u9879\u3002`
+    : addedText;
+  showFeedback(message, "success");
+
+  refresh();
+
+  return { added: uniqueNew.length, duplicates: duplicates.length };
+}
+
+function removeTrackedMint(mint) {
+  if (!trackedMints.includes(mint)) {
+    return;
+  }
+
+  trackedMints = trackedMints.filter((value) => value !== mint);
+  saveTrackedMints(trackedMints);
+  previousPrices.delete(mint);
+
+  latestSnapshot = latestSnapshot.filter((token) => token.mint !== mint);
+  renderTokens(latestSnapshot);
+
+  if (!trackedMints.length) {
+    lastUpdated.textContent = "\u8bf7\u5148\u6dfb\u52a0\u9700\u8981\u8ddf\u8e2a\u7684 Token mint \u5730\u5740";
+  }
+
+  const label = formatMintPreview(mint);
+  showFeedback(`\u5df2\u79fb\u9664 ${label}`, "info");
 }
 
 function setLink(anchor, href) {
@@ -123,12 +350,13 @@ function setLink(anchor, href) {
 }
 
 function renderTokens(tokens) {
+  latestSnapshot = tokens;
   tokenGrid.replaceChildren();
 
   if (!tokens.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "暂无收藏 Token，请在 scripts/main.js 中添加 mint 地址。";
+    empty.textContent = "\u6682\u65e0\u6536\u85cf Token\uff0c\u8bf7\u5728\u4e0a\u65b9\u8f93\u5165 mint \u5730\u5740\u4ee5\u5f00\u59cb\u5173\u6ce8\u3002";
     tokenGrid.append(empty);
     return;
   }
@@ -136,29 +364,39 @@ function renderTokens(tokens) {
   for (const token of tokens) {
     const { info, price } = token;
     const node = template.content.firstElementChild.cloneNode(true);
+    node.dataset.mint = token.mint;
 
     const icon = node.querySelector(".token-icon");
     icon.loading = "lazy";
     icon.src = info?.icon ?? "https://placehold.co/80x80/20232a/8b949e?text=Token";
-    icon.alt = info?.symbol ? `${info.symbol} 图标` : "Token 图标";
+    icon.alt = info?.symbol ? `${info.symbol} \u56fe\u6807` : "Token \u56fe\u6807";
 
-    node.querySelector("h2").textContent = info?.name ?? "未知 Token";
-    node.querySelector(".symbol").textContent = info?.symbol ? `#${info.symbol}` : token.mint.slice(0, 6);
+    node.querySelector("h2").textContent = info?.name ?? "\u672a\u77e5 Token";
+    node.querySelector(".symbol").textContent = info?.symbol ? `$${info.symbol}` : token.mint.slice(0, 6);
+    const mintField = node.querySelector(".mint");
+    if (mintField) {
+      mintField.textContent = formatMintPreview(token.mint);
+      mintField.title = token.mint;
+    }
+    const copyButton = node.querySelector(".copy-mint");
+    if (copyButton) {
+      copyButton.dataset.mint = token.mint;
+    }
 
     const usdPrice = price?.usdPrice ?? info?.usdPrice;
     const marketCap = info?.mcap;
-    const liquidity = info?.liquidity;
     const priceChange = price?.priceChange24h ?? info?.stats24h?.priceChange;
 
     const priceField = node.querySelector(".price");
-    priceField.textContent = formatCurrency(usdPrice);
+    const priceLabel = usdPrice != null ? `\u4ef7\u683c ${formatCurrency(usdPrice)}` : "\u4ef7\u683c --";
+    priceField.textContent = priceLabel;
     const previous = previousPrices.get(token.mint);
     if (previous != null && usdPrice != null) {
       const diff = usdPrice - previous;
       if (Math.abs(diff) > 0) {
         const trend = document.createElement("span");
         trend.className = "price-trend";
-        trend.textContent = ` (${diff > 0 ? "↑" : "↓"}${formatNumber(Math.abs(diff), {
+        trend.textContent = ` (${diff > 0 ? "\u2191" : "\u2193"}${formatNumber(Math.abs(diff), {
           style: "currency",
           maximumFractionDigits: usdPrice < 1 ? 6 : 4
         })})`;
@@ -167,10 +405,10 @@ function renderTokens(tokens) {
     }
 
     node.querySelector(".market-cap").textContent = marketCap != null ? formatCurrency(marketCap) : "--";
-    node.querySelector(".liquidity").textContent = liquidity != null ? formatCurrency(liquidity) : "--";
 
     const changeField = node.querySelector(".price-change");
     changeField.textContent = formatPercent(priceChange);
+    changeField.classList.remove("gain", "loss");
     if (priceChange != null) {
       changeField.classList.add(priceChange >= 0 ? "gain" : "loss");
     }
@@ -184,16 +422,9 @@ function renderTokens(tokens) {
     setLink(node.querySelector(".twitter"), links.twitter);
     setLink(node.querySelector(".telegram"), links.telegram);
 
-    const auditContainer = node.querySelector(".audit");
-    const auditItems = buildAuditList(info?.audit);
-    if (auditItems.length) {
-      const list = auditContainer.querySelector("ul");
-      for (const item of auditItems) {
-        const li = document.createElement("li");
-        li.textContent = item;
-        list.appendChild(li);
-      }
-      auditContainer.hidden = false;
+    const removeButton = node.querySelector(".token-remove");
+    if (removeButton) {
+      removeButton.dataset.mint = token.mint;
     }
 
     tokenGrid.append(node);
@@ -201,14 +432,14 @@ function renderTokens(tokens) {
 }
 
 async function refresh() {
-  const mints = TRACKED_TOKENS.map((token) => token.mint);
+  const mints = trackedMints.slice();
   if (!mints.length) {
     renderTokens([]);
-    lastUpdated.textContent = "请先添加需要跟踪的 Token mint 地址";
+    lastUpdated.textContent = "\u8bf7\u5148\u6dfb\u52a0\u9700\u8981\u8ddf\u8e2a\u7684 Token mint \u5730\u5740";
     return;
   }
 
-  lastUpdated.textContent = "数据加载中…";
+  lastUpdated.textContent = "\u6570\u636e\u52a0\u8f7d\u4e2d\u2026";
   tokenGrid.classList.add("loading");
 
   try {
@@ -233,16 +464,16 @@ async function refresh() {
     }
 
     const now = new Date();
-    lastUpdated.textContent = `最后更新：${now.toLocaleString("zh-CN", {
+    lastUpdated.textContent = `\u6700\u540e\u66f4\u65b0\uff1a${now.toLocaleString("zh-CN", {
       hour12: false
     })}`;
   } catch (error) {
     console.error(error);
     const errorBox = document.createElement("div");
     errorBox.className = "empty-state";
-    errorBox.textContent = `加载失败：${error.message}`;
+    errorBox.textContent = `\u52a0\u8f7d\u5931\u8d25\uff1a${error.message}`;
     tokenGrid.replaceChildren(errorBox);
-    lastUpdated.textContent = "加载失败，请稍后重试";
+    lastUpdated.textContent = "\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
   } finally {
     tokenGrid.classList.remove("loading");
   }
@@ -257,6 +488,44 @@ function scheduleRefresh() {
     refreshTimerId = setInterval(refresh, interval);
   }
 }
+
+if (mintForm) {
+  mintForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const rawInput = mintInput?.value ?? "";
+    const mints = extractMints(rawInput);
+    const result = addTrackedMints(mints);
+    if (mintInput) {
+      if (result?.added) {
+        mintInput.value = "";
+      }
+      mintInput.focus();
+    }
+  });
+}
+
+if (mintInput) {
+  mintInput.addEventListener("input", () => {
+    clearFeedback();
+  });
+}
+
+tokenGrid.addEventListener("click", (event) => {
+  const copyButton = event.target.closest(".copy-mint");
+  if (copyButton) {
+    const { mint } = copyButton.dataset;
+    if (mint) {
+      copyMintToClipboard(mint);
+    }
+    return;
+  }
+
+  const removeButton = event.target.closest(".token-remove");
+  if (!removeButton) return;
+  const { mint } = removeButton.dataset;
+  if (!mint) return;
+  removeTrackedMint(mint);
+});
 
 refreshButton.addEventListener("click", () => {
   refresh();

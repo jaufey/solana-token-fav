@@ -3,24 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Solana Meme Token 收藏夹</title>
+    <title>Solana Meme Token &#x6536;&#x85cf;&#x5939;</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="app-header">
-      <h1>Solana Meme Token 收藏夹</h1>
+      <h1>Solana Meme Token &#x6536;&#x85cf;&#x5939;</h1>
       <div class="controls">
-        <label>
-          刷新间隔
-          <select id="refresh-select">
-            <option value="180000">3 分钟</option>
-            <option value="300000" selected>5 分钟</option>
-            <option value="600000">10 分钟</option>
-          </select>
-        </label>
-        <button id="refresh-button" type="button">立即刷新</button>
+        <form class="mint-form" id="mint-form">
+          <label class="mint-label" for="mint-input">&#x6dfb;&#x52a0; Token</label>
+          <div class="mint-input-row">
+            <input
+              id="mint-input"
+              name="mint"
+              type="text"
+              autocomplete="off"
+              placeholder="&#x8f93;&#x5165; mint &#x5730;&#x5740;&#xff0c;&#x652f;&#x6301;&#x7c98;&#x8d34;&#x591a;&#x884c;&#x6216;&#x5e26;&#x6709; mint &#x5b57;&#x6bb5;&#x7684; JSON"
+              required
+            />
+            <button type="submit">&#x6dfb;&#x52a0;</button>
+          </div>
+          <p class="form-hint">&#x4f1a;&#x81ea;&#x52a8;&#x8bc6;&#x522b;&#x6587;&#x672c;&#x4e2d;&#x7684;&#x6709;&#x6548; mint&#xff0c;&#x907f;&#x514d;&#x91cd;&#x590d;&#x6dfb;&#x52a0;&#x3002;</p>
+          <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
+        </form>
+        <div class="refresh-controls">
+          <label class="refresh-label" for="refresh-select">&#x5237;&#x65b0;&#x95f4;&#x9694;</label>
+          <div class="refresh-input-row">
+            <select id="refresh-select">
+              <option value="180000">3 &#x5206;&#x949f;</option>
+              <option value="300000" selected>5 &#x5206;&#x949f;</option>
+              <option value="600000">10 &#x5206;&#x949f;</option>
+            </select>
+            <button id="refresh-button" type="button">&#x7acb;&#x5373;&#x5237;&#x65b0;</button>
+          </div>
+        </div>
       </div>
-      <p class="last-updated" id="last-updated">数据加载中…</p>
+      <p class="last-updated" id="last-updated">&#x6570;&#x636e;&#x52a0;&#x8f7d;&#x4e2d;&#x2026;</p>
     </header>
     <main>
       <section class="token-grid" id="token-grid" aria-live="polite"></section>
@@ -28,41 +46,42 @@
     <template id="token-card-template">
       <article class="token-card">
         <div class="token-header">
-          <img class="token-icon" alt="" />
-          <div class="token-title">
-            <h2></h2>
-            <p class="symbol"></p>
+          <div class="token-main">
+            <img class="token-icon" alt="" />
+            <div class="token-title">
+              <h2></h2>
+              <p class="symbol"></p>
+              <div class="mint-row">
+                <span class="mint"></span>
+                <button type="button" class="copy-mint" aria-label="&#x590d;&#x5236;&#x5408;&#x7ea6;&#x5730;&#x5740;">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a3 3 0 0 0-3 3v12h2V4a1 1 0 0 1 1-1h12z"/><path d="M20 5H8a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3zm1 15a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1z"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
+          <button type="button" class="token-remove" aria-label="&#x79fb;&#x9664; Token">&#x00d7;</button>
         </div>
         <dl class="token-stats">
-          <div>
-            <dt>价格</dt>
-            <dd class="price"></dd>
+          <div class="market-line">
+            <dt>&#x5e02;&#x503c;</dt>
+            <dd>
+              <span class="market-cap"></span>
+              <span class="price"></span>
+            </dd>
           </div>
           <div>
-            <dt>24h 涨跌</dt>
+            <dt>24h &#x6da8;&#x8dcc;</dt>
             <dd class="price-change"></dd>
-          </div>
-          <div>
-            <dt>市值</dt>
-            <dd class="market-cap"></dd>
-          </div>
-          <div>
-            <dt>流动性</dt>
-            <dd class="liquidity"></dd>
           </div>
         </dl>
         <div class="links">
-          <a class="link website" target="_blank" rel="noopener noreferrer">官网</a>
+          <a class="link website" target="_blank" rel="noopener noreferrer">&#x5b98;&#x7f51;</a>
           <a class="link twitter" target="_blank" rel="noopener noreferrer">Twitter</a>
           <a class="link telegram" target="_blank" rel="noopener noreferrer">Telegram</a>
         </div>
-        <div class="audit" hidden>
-          <h3>合约审计</h3>
-          <ul></ul>
-        </div>
       </article>
     </template>
+    <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="scripts/main.js"></script>
   </body>
 </html>
