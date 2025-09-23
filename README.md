@@ -1,1 +1,32 @@
-我想写一个网页，来展示我收藏的一些solana token meme。 1. 实时价格，倒是不能更新那么及时，不过我可以几分钟请求一次，看看价格趋势就行。 2. 网页上以列表或者block的形式来展示我关注的token，显示图片、symbol、当前市值。价格，社区链接之类的。 3. 我获取信息的接口主要有两个： - https://lite-api.jup.ag/tokens/v2/search?query=${options.mint.join(',')}，这个接口可以根据mint信息来获取token的基础信息，，一次最多100个mint。接口响应的例子是：[ { "id": "EyiVQN5W1s2z3DPrbZnQuxyzQBPpzvc1inyScUxxpump", "name": "Remittix", "symbol": "RTX", "icon": "https://ipfs.io/ipfs/Qmdgy4zMmz4aS5T2McVrhirBgrJfH7xwLLabiSPFaATZ6w", "decimals": 6, "twitter": "https://x.com/remittix", "telegram": "https://t.me/remittix_Portal", "website": "https://remittix.io/", "dev": "HFLsyMTY824AKauPARRKCz8XoXB54yEVSDiBxTZCejSW", "circSupply": 999467120.034655, "totalSupply": 999467120.034655, "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "launchpad": "pump.fun", "firstPool": { "id": "EyiVQN5W1s2z3DPrbZnQuxyzQBPpzvc1inyScUxxpump", "createdAt": "2024-12-26T19:43:50Z" }, "graduatedPool": "JCSYX9tYhbn2yZK1hr4Xq9wda2fMP91XWfNyYz4xo8iu", "graduatedAt": "2025-05-28T19:36:20Z", "holderCount": 1154, "audit": { "mintAuthorityDisabled": true, "freezeAuthorityDisabled": true, "topHoldersPercentage": 45.2799636196834, "devBalancePercentage": 2.25926391647752e-8, "devMigrations": 1, "highSingleOwnership": true }, "organicScore": 0, "organicScoreLabel": "low", "tags": [ "launchpad", "unknown" ], "fdv": 124363.939608372, "mcap": 124363.939608372, "usdPrice": 0.000124430245993544, "priceBlockId": 368757812, "liquidity": 42749.426937544, "stats5m": { "holderChange": 0.347826086956522, "liquidityChange": 0.318808758115508, "volumeChange": 589.320692878507, "buyVolume": 37.3290737980634, "numBuys": 1, "numTraders": 1, "numNetBuyers": 1 }, "stats1h": { "priceChange": 0.320198862803513, "holderChange": 0.347826086956522, "liquidityChange": -0.053670538682927, "volumeChange": -92.8523753696298, "buyVolume": 49.8995037933796, "sellVolume": 5.4153421163352, "numBuys": 3, "numSells": 1, "numTraders": 4, "numNetBuyers": 3 }, "stats6h": { "priceChange": -6.36495202956735, "liquidityChange": -1.79926603917185, "volumeChange": -69.388218760996, "buyVolume": 268.9716575657, "sellVolume": 986.245755455083, "sellOrganicVolume": 530.876021185038, "numBuys": 9, "numSells": 11, "numTraders": 18, "numNetBuyers": 7 }, "stats24h": { "priceChange": -28.314053272474, "holderChange": -0.431406384814495, "liquidityChange": -9.49543019955278, "volumeChange": -26.8227509679523, "buyVolume": 1657.37781059182, "sellVolume": 5822.12192963788, "buyOrganicVolume": 34.7779217940344, "sellOrganicVolume": 579.401557404831, "numBuys": 37, "numSells": 26, "numTraders": 47, "numNetBuyers": 24 }, "updatedAt": "2025-09-23T15:22:33.410963518Z" } ] - 另一个接口是只查询token价格，一批最多查50个： https://lite-api.jup.ag/price/v3?ids=${mint.join(',')} 响应结果的例子是： { "3sLSDYfmbu5ZdmC7wbBUzvwRFE6S1dtrTUafuhhApump": { "usdPrice": 0.000421473161993719, "blockId": 368791689, "decimals": 6, "priceChange24h": 167.394329463573 }, "EyiVQN5W1s2z3DPrbZnQuxyzQBPpzvc1inyScUxxpump": { "usdPrice": 0.000134831976424509, "blockId": 368791482, "decimals": 6, "priceChange24h": -21.9396686673286 } }
+# Solana Meme Token 收藏夹
+
+一个纯前端网页，用来跟踪并展示自选的 Solana Meme Token：
+- 使用 Jupiter Lite API 获取 Token 的基础信息与价格。
+- 展示图标、名称、符号、市值、流动性、24 小时涨跌等数据。
+- 支持查看常用社区链接（官网 / Twitter / Telegram）。
+- 可选择 3、5、10 分钟三个刷新频率，必要时也能手动立即刷新。
+
+## 使用方式
+
+1. 直接在本地打开 `index.html` 即可使用（无需构建或后台服务）。
+2. 页面顶部的输入框支持一次粘贴一个或多个 mint（即使包含在 JSON 中也能自动识别），点击「添加」即可加入关注列表。
+3. 已关注的 mint 会保存在浏览器的 localStorage 中，刷新或重开页面时会自动恢复；卡片右上角可随时移除关注。
+4. 页面会按照当前选择的刷新间隔定时同步最新数据，也可以点击「立即刷新」强制更新。
+
+> **提示**：
+> - `https://lite-api.jup.ag/tokens/v2/search` 最多一次查询 100 个 mint；
+> - `https://lite-api.jup.ag/price/v3` 最多一次查询 50 个 mint；
+> - 本项目已自动分批请求，无需手动处理。
+
+## 自定义
+
+- 样式可以在 `styles.css` 中调整；
+- 若要调整默认展示的 Token，可以修改 `scripts/main.js` 顶部的 `DEFAULT_MINTS` 列表；
+- 若要展示更多信息，可以在 `scripts/main.js` 的 `renderTokens` 函数中补充字段；
+- 若需要更短/更长的刷新间隔，也可以修改 `index.html` 中下拉选项的毫秒值。
+
+## 开发小记
+
+- 使用原生 ES Modules 与 `fetch`，无需构建工具。
+- 对接口异常有基本的错误提示，方便排查。
+- 默认会记住上一次获取的价格，在下一次更新时给出上涨/下跌与幅度提示。
