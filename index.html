@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solana Meme Token 收藏夹</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Solana Meme Token 收藏夹</h1>
+      <div class="controls">
+        <label>
+          刷新间隔
+          <select id="refresh-select">
+            <option value="180000">3 分钟</option>
+            <option value="300000" selected>5 分钟</option>
+            <option value="600000">10 分钟</option>
+          </select>
+        </label>
+        <button id="refresh-button" type="button">立即刷新</button>
+      </div>
+      <p class="last-updated" id="last-updated">数据加载中…</p>
+    </header>
+    <main>
+      <section class="token-grid" id="token-grid" aria-live="polite"></section>
+    </main>
+    <template id="token-card-template">
+      <article class="token-card">
+        <div class="token-header">
+          <img class="token-icon" alt="" />
+          <div class="token-title">
+            <h2></h2>
+            <p class="symbol"></p>
+          </div>
+        </div>
+        <dl class="token-stats">
+          <div>
+            <dt>价格</dt>
+            <dd class="price"></dd>
+          </div>
+          <div>
+            <dt>24h 涨跌</dt>
+            <dd class="price-change"></dd>
+          </div>
+          <div>
+            <dt>市值</dt>
+            <dd class="market-cap"></dd>
+          </div>
+          <div>
+            <dt>流动性</dt>
+            <dd class="liquidity"></dd>
+          </div>
+        </dl>
+        <div class="links">
+          <a class="link website" target="_blank" rel="noopener noreferrer">官网</a>
+          <a class="link twitter" target="_blank" rel="noopener noreferrer">Twitter</a>
+          <a class="link telegram" target="_blank" rel="noopener noreferrer">Telegram</a>
+        </div>
+        <div class="audit" hidden>
+          <h3>合约审计</h3>
+          <ul></ul>
+        </div>
+      </article>
+    </template>
+    <script type="module" src="scripts/main.js"></script>
+  </body>
+</html>
