@@ -813,12 +813,15 @@ body[data-view="compact"] .market-cap {
 
 .toast-root {
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
   display: grid;
   gap: 0.75rem;
   z-index: 1000;
   pointer-events: none;
+  width: min(90vw, 420px);
+  justify-items: center;
 }
 
 .toast {

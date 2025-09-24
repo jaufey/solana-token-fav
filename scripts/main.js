@@ -29,6 +29,20 @@ const viewToggle = document.getElementById("view-toggle");
 const toastRoot = document.getElementById("toast-root");
 const searchInput = document.getElementById("token-search");
 
+if (toastRoot) {
+  toastRoot.style.position = 'fixed';
+  toastRoot.style.display = 'grid';
+  toastRoot.style.pointerEvents = 'none';
+  toastRoot.style.zIndex = '1000';
+  toastRoot.style.top = '2rem';
+  toastRoot.style.left = '50%';
+  toastRoot.style.right = 'auto';
+  toastRoot.style.bottom = 'auto';
+  toastRoot.style.transform = 'translateX(-50%)';
+  toastRoot.style.width = 'min(90vw, 420px)';
+  toastRoot.style.setProperty('justify-items', 'center');
+}
+
 let refreshTimerId = null;
 const previousPrices = new Map();
 let trackedMints = loadTrackedMints();
@@ -476,23 +490,28 @@ function updateTokenView() {
 function showToast(message, status = "info") {
   if (!toastRoot) return;
 
+  const staleToasts = Array.from(toastRoot.children).filter((node) => node !== activeToast && !node.classList.contains('visible'));
+  for (const node of staleToasts) {
+    node.remove();
+  }
+
   if (toastTimerId) {
     clearTimeout(toastTimerId);
     toastTimerId = null;
   }
 
-  if (activeToast) {
-    activeToast.classList.remove("visible");
-    activeToast.addEventListener(
+  const previous = activeToast;
+  if (previous) {
+    previous.classList.remove("visible");
+    previous.addEventListener(
       "transitionend",
       () => {
-        if (activeToast && activeToast.parentElement) {
-          activeToast.remove();
+        if (previous.parentElement) {
+          previous.remove();
         }
       },
       { once: true }
     );
-    activeToast = null;
   }
 
   const toast = document.createElement("div");
@@ -517,7 +536,9 @@ function showToast(message, status = "info") {
       },
       { once: true }
     );
-    activeToast = null;
+    if (activeToast === toast) {
+      activeToast = null;
+    }
     toastTimerId = null;
   }, 3200);
 }
