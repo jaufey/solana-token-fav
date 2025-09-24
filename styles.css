@@ -176,18 +176,35 @@ body {
 
 
 .token-card {
+  position: relative;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 14px;
-  padding: 0.95rem;
+  padding: 2.8rem 0.95rem 0.95rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   backdrop-filter: blur(10px);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+  overflow: visible;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
-
+.token-image {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(0, 255, 163, 0.18), rgba(100, 133, 255, 0.18));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.32);
+  z-index: 2;
+}
 .token-card:hover {
   transform: translateY(-3px);
   border-color: rgba(0, 255, 163, 0.35);
@@ -203,16 +220,17 @@ body {
 
 .token-main {
   display: flex;
-  align-items: center;
-  gap: 0.7rem;
+  flex-direction: column;
+  gap: 0.6rem;
   min-width: 0;
+  width: 100%;
 }
 
 .token-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   object-fit: cover;
 }
@@ -256,8 +274,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 1.8rem;
+  height: 1.8rem;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.08);
@@ -267,8 +285,8 @@ body {
 }
 
 .copy-mint svg {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 0.95rem;
+  height: 0.95rem;
   fill: currentColor;
 }
 
