@@ -1,5 +1,4 @@
-﻿:root {
-  color-scheme: light dark;
+:root {
   --bg: #0d1117;
   --card-bg: rgba(13, 17, 23, 0.8);
   --card-border: rgba(255, 255, 255, 0.08);
@@ -9,8 +8,30 @@
   --accent-weak: rgba(0, 255, 163, 0.2);
   --loss: #ff5c8a;
   --gain: #6ee7b7;
+  --surface-1: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --surface-border: rgba(255, 255, 255, 0.12);
   font-family: "Inter", "SF Pro Display", "PingFang SC", system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body[data-theme="light"] {
+  --bg: #fdf7ff;
+  --card-bg: rgba(255, 255, 255, 0.88);
+  --card-border: rgba(229, 140, 208, 0.35);
+  --fg: #1b1324;
+  --muted: rgba(27, 19, 36, 0.62);
+  --accent: #ff5fbf;
+  --accent-weak: rgba(255, 95, 191, 0.18);
+  --loss: #e0487d;
+  --gain: #0f9664;
+  --surface-1: rgba(255, 255, 255, 0.92);
+  --surface-2: rgba(255, 255, 255, 0.96);
+  --surface-border: rgba(231, 148, 204, 0.4);
+  color-scheme: light;
+  background: radial-gradient(circle at 20% 18%, rgba(255, 180, 220, 0.28), transparent 44%),
+    radial-gradient(circle at 82% -4%, rgba(255, 225, 248, 0.55), transparent 52%),
+    var(--bg);
 }
 
 * {
@@ -20,6 +41,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  color-scheme: dark;
   background: radial-gradient(circle at 20% 20%, rgba(0, 255, 163, 0.08), transparent 40%),
     radial-gradient(circle at 80% 0%, rgba(100, 133, 255, 0.12), transparent 45%),
     var(--bg);
@@ -28,6 +50,7 @@ body {
 }
 
 .app-header {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,6 +63,43 @@ body {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 2.5rem);
   letter-spacing: 0.08em;
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 1.5rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-1);
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-weak);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.theme-toggle:active {
+  transform: scale(0.96);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body[data-theme="light"] .theme-toggle {
+  box-shadow: 0 10px 24px rgba(221, 165, 206, 0.16);
 }
 
 .controls {
@@ -77,9 +137,9 @@ body {
 .mint-input-row input {
   flex: 1;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-1);
   color: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--surface-border);
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
   font-size: 0.95rem;
@@ -88,15 +148,15 @@ body {
 
 .mint-input-row input:focus {
   outline: none;
-  border-color: rgba(0, 255, 163, 0.45);
-  box-shadow: 0 0 0 3px rgba(0, 255, 163, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
 }
 
 .controls select,
 .controls button {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-1);
   color: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--surface-border);
   padding: 0.45rem 0.9rem;
   border-radius: 999px;
   cursor: pointer;
@@ -105,8 +165,12 @@ body {
 }
 
 .controls button {
-  background: linear-gradient(120deg, rgba(0, 255, 163, 0.35), rgba(100, 133, 255, 0.35));
+  background: linear-gradient(120deg, var(--accent-weak), rgba(100, 133, 255, 0.35));
   transition: transform 120ms ease, box-shadow 160ms ease;
+}
+
+body[data-theme="light"] .controls button {
+  background: linear-gradient(120deg, var(--accent-weak), rgba(255, 182, 229, 0.4));
 }
 
 .controls button:hover {
@@ -203,14 +267,22 @@ body {
   border-radius: 22px;
   overflow: hidden;
   background: linear-gradient(160deg, rgba(0, 255, 163, 0.22), rgba(100, 133, 255, 0.22));
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--surface-border);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
   z-index: 2;
 }
 .token-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(0, 255, 163, 0.35);
+  border-color: var(--accent);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+body[data-theme="light"] .token-card {
+  box-shadow: 0 20px 45px rgba(221, 165, 206, 0.16);
+}
+
+body[data-theme="light"] .token-card:hover {
+  box-shadow: 0 24px 52px rgba(221, 165, 206, 0.22);
 }
 
 .token-header {
@@ -229,11 +301,11 @@ body {
 }
 
 .token-icon {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-2);
   object-fit: cover;
 }
 
@@ -259,7 +331,7 @@ body {
 }
 
 .token-title .mint {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
   font-size: 0.78rem;
   letter-spacing: 0.03em;
   font-family: "JetBrains Mono", "Fira Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -269,7 +341,7 @@ body {
   align-items: center;
   gap: 0.4rem;
   margin-top: 0.2rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
 }
 
 .copy-mint {
@@ -279,8 +351,8 @@ body {
   width: 1.8rem;
   height: 1.8rem;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-2);
   color: inherit;
   cursor: pointer;
   transition: border-color 160ms ease, background 160ms ease, transform 120ms ease;
@@ -293,12 +365,12 @@ body {
 }
 
 .copy-mint:hover {
-  border-color: rgba(0, 255, 163, 0.5);
-  background: rgba(0, 255, 163, 0.18);
+  border-color: var(--accent);
+  background: var(--accent-weak);
 }
 
 .copy-mint:focus-visible {
-  outline: 2px solid rgba(0, 255, 163, 0.5);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -307,8 +379,8 @@ body {
 }
 
 .token-remove {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-1);
+  border: 1px solid var(--surface-border);
   border-radius: 999px;
   color: var(--muted);
   width: 1.75rem;
@@ -379,8 +451,8 @@ body {
   gap: 0.25rem;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-1);
 }
 
 .token-stats-row .stat.gain {
@@ -404,16 +476,16 @@ body {
   justify-content: center;
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-1);
   color: inherit;
   text-decoration: none;
   font-size: 0.78rem;
-  background: rgba(255, 255, 255, 0.06);
   transition: border-color 160ms ease, color 160ms ease;
 }
 
 .link:hover {
-  border-color: rgba(0, 255, 163, 0.45);
+  border-color: var(--accent);
   color: var(--accent);
 }
 
@@ -441,7 +513,7 @@ body {
 }
 
 .audit {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--surface-border);
   padding-top: 0.75rem;
 }
 
@@ -473,13 +545,20 @@ body {
   text-align: center;
   padding: 2rem;
   color: var(--muted);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border: 1px dashed var(--surface-border);
   border-radius: 16px;
 }
 
 @media (max-width: 640px) {
   body {
     padding: 0 0.75rem 2.5rem;
+  }
+
+  .theme-toggle {
+    top: 1rem;
+    right: 0.75rem;
+    width: 2.2rem;
+    height: 2.2rem;
   }
 
   .controls {
@@ -523,13 +602,19 @@ body {
   max-width: 320px;
   padding: 0.75rem 1rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--surface-border);
   background: rgba(13, 17, 23, 0.92);
   color: var(--fg);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
   transform: translateY(12px);
   opacity: 0;
   transition: opacity 200ms ease, transform 200ms ease;
+}
+
+body[data-theme="light"] .toast {
+  background: rgba(255, 240, 251, 0.96);
+  border-color: rgba(231, 148, 204, 0.45);
+  box-shadow: 0 20px 36px rgba(221, 165, 206, 0.24);
 }
 
 .toast.visible {

@@ -7,6 +7,7 @@ const DEFAULT_MINTS = [
 ];
 
 const STORAGE_KEY = "solana-token-favs:mints";
+const THEME_STORAGE_KEY = "solana-token-favs:theme";
 const MINT_PATTERN = /[1-9A-HJ-NP-Za-km-z]{32,}/g;
 const SINGLE_MINT_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,}$/;
 
@@ -23,6 +24,7 @@ const lastUpdated = document.getElementById("last-updated");
 const mintForm = document.getElementById("mint-form");
 const mintInput = document.getElementById("mint-input");
 const mintFeedback = document.getElementById("mint-feedback");
+const themeToggle = document.getElementById("theme-toggle");
 const toastRoot = document.getElementById("toast-root");
 
 let refreshTimerId = null;
@@ -51,6 +53,91 @@ function getStorage() {
     console.warn("\u65e0\u6cd5\u8bbf\u95ee localStorage\uff0c\u5c06\u4e0d\u4f1a\u6301\u4e45\u5316\u6536\u85cf\u3002", error);
     return null;
   }
+}
+
+function loadThemePreference() {
+  const storage = getStorage();
+  if (!storage) {
+    return null;
+  }
+  try {
+    const stored = storage.getItem(THEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+  } catch (error) {
+    console.warn("\u8bfb\u53d6\u4e3b\u9898\u504f\u597d\u5931\u8d25\uff0c\u5c06\u6839\u636e\u7cfb\u7edf\u8bbe\u7f6e\u663e\u793a\u4e3b\u9898\u3002", error);
+  }
+  return null;
+}
+
+function saveThemePreference(theme) {
+  const storage = getStorage();
+  if (!storage) {
+    return;
+  }
+  try {
+    storage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (error) {
+    console.warn("\u4fdd\u5b58\u4e3b\u9898\u504f\u597d\u5931\u8d25\u3002", error);
+  }
+}
+
+function applyTheme(theme) {
+  const normalized = theme === "light" ? "light" : "dark";
+  const body = document.body;
+  if (!body) {
+    return;
+  }
+  body.dataset.theme = normalized;
+  if (themeToggle) {
+    const isLight = normalized === "light";
+    themeToggle.setAttribute("aria-pressed", isLight ? "true" : "false");
+    themeToggle.textContent = isLight ? "\u{1F319}" : "\u2600\uFE0F";
+    const label = isLight ? "\u5207\u6362\u5230\u6697\u8272\u4e3b\u9898" : "\u5207\u6362\u5230\u4eae\u8272\u4e3b\u9898";
+    themeToggle.setAttribute("aria-label", label);
+    themeToggle.title = label;
+  }
+}
+
+function resolvePreferredTheme() {
+  const stored = loadThemePreference();
+  if (stored) {
+    return { theme: stored, fromStorage: true };
+  }
+  if (typeof window !== "undefined" && window.matchMedia) {
+    const prefersLight = window.matchMedia("(prefers-color-scheme: light)");
+    return { theme: prefersLight.matches ? "light" : "dark", fromStorage: false, mediaQuery: prefersLight };
+  }
+  return { theme: "dark", fromStorage: false, mediaQuery: null };
+}
+
+const preferredTheme = resolvePreferredTheme();
+let userHasThemePreference = preferredTheme.fromStorage;
+applyTheme(preferredTheme.theme);
+
+if (preferredTheme.mediaQuery) {
+  const handleThemeMediaChange = (event) => {
+    if (userHasThemePreference) {
+      return;
+    }
+    applyTheme(event.matches ? "light" : "dark");
+  };
+  if (typeof preferredTheme.mediaQuery.addEventListener === "function") {
+    preferredTheme.mediaQuery.addEventListener("change", handleThemeMediaChange);
+  } else if (typeof preferredTheme.mediaQuery.addListener === "function") {
+    preferredTheme.mediaQuery.addListener(handleThemeMediaChange);
+  }
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const currentTheme = document.body?.dataset.theme === "light" ? "light" : "dark";
+    const nextTheme = currentTheme === "light" ? "dark" : "light";
+    userHasThemePreference = true;
+    applyTheme(nextTheme);
+    saveThemePreference(nextTheme);
+  });
 }
 
 function isLikelyMint(value) {
