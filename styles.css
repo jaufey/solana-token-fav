@@ -311,46 +311,67 @@ body {
   transform: scale(0.92);
 }
 
-.token-stats {
+.token-title h2.symbol {
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 0.65rem;
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.token-stats div {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
-  padding: 0.6rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.token-title .token-name {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
-.token-stats dt {
-  margin: 0;
+.token-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.token-meta .meta-label {
   font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
-  letter-spacing: 0.06em;
 }
 
-.token-stats dd {
-  margin: 0.3rem 0 0;
+.token-meta .market-cap {
+  font-weight: 600;
   font-size: 0.95rem;
-  font-variant-numeric: tabular-nums;
 }
-.token-stats .market-line dd {
+
+.token-stats-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-}
-
-.token-stats .market-line .price {
-  font-size: 0.78rem;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  font-size: 0.72rem;
   color: var(--muted);
-  font-weight: 500;
 }
 
+.token-stats-row .stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
 
+.token-stats-row .stat.gain {
+  color: var(--gain);
+  border-color: rgba(110, 231, 183, 0.4);
+}
+
+.token-stats-row .stat.loss {
+  color: var(--loss);
+  border-color: rgba(255, 92, 138, 0.4);
+}
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -507,4 +528,3 @@ body {
 .toast-root .toast + .toast {
   margin-top: 0;
 }
-

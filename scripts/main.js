@@ -110,7 +110,17 @@ function extractMints(text) {
   return Array.from(new Set(normalized));
 }
 
+function getPriceChange(stats) {
+  if (stats == null) return null;
+  if (typeof stats === "number") return stats;
+  if (typeof stats.priceChange === "number") return stats.priceChange;
+  if (typeof stats.price_change === "number") return stats.price_change;
+  if (typeof stats.change === "number") return stats.change;
+  return null;
+}
+
 function showFeedback(message, status = "info") {
+
   if (!mintFeedback) return;
   if (feedbackTimerId) {
     clearTimeout(feedbackTimerId);
@@ -177,23 +187,27 @@ async function fetchTokenPrices(mints) {
   return priceMap;
 }
 
-function formatNumber(value, { style = "decimal", maximumFractionDigits = 2 } = {}) {
+function formatNumber(value, options = {}) {
   if (value == null || Number.isNaN(value)) return "--";
-  return new Intl.NumberFormat("zh-CN", {
+  const { style = "decimal", maximumFractionDigits = 2 } = options;
+  return new Intl.NumberFormat("en-US", {
+    ...options,
     style,
-    currency: style === "currency" ? "USD" : undefined,
     maximumFractionDigits,
-    notation: style === "currency" && value >= 1_000_000 ? "compact" : undefined
+    currency: style === "currency" ? "USD" : options.currency
   }).format(value);
 }
 
-function formatCurrency(value) {
+function formatCurrency(value, { compact = false } = {}) {
   if (value == null || Number.isNaN(value)) return "--";
-  const opts = {
+  const digits = value < 1 ? 6 : value < 10 ? 4 : 2;
+  const useCompact = compact || value >= 1_000_000;
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    maximumFractionDigits: value < 1 ? 6 : value < 10 ? 4 : 2
-  };
-  return formatNumber(value, opts);
+    currency: "USD",
+    maximumFractionDigits: digits,
+    notation: useCompact ? "compact" : undefined
+  }).format(value);
 }
 
 function formatPercent(value) {
@@ -371,46 +385,58 @@ function renderTokens(tokens) {
     icon.src = info?.icon ?? "https://placehold.co/80x80/20232a/8b949e?text=Token";
     icon.alt = info?.symbol ? `${info.symbol} \u56fe\u6807` : "Token \u56fe\u6807";
 
-    node.querySelector("h2").textContent = info?.name ?? "\u672a\u77e5 Token";
-    node.querySelector(".symbol").textContent = info?.symbol ? `$${info.symbol}` : token.mint.slice(0, 6);
+    const symbolField = node.querySelector(".symbol");
+    if (symbolField) {
+      const fallback = token.mint.slice(0, 6).toUpperCase();
+      const rawSymbol = info?.symbol ? `$${info.symbol}` : fallback;
+      symbolField.textContent = rawSymbol;
+    }
+
+    const nameField = node.querySelector(".token-name");
+    if (nameField) {
+      nameField.textContent = info?.name ?? "\u672a\u77e5 Token";
+    }
+
     const mintField = node.querySelector(".mint");
     if (mintField) {
       mintField.textContent = formatMintPreview(token.mint);
       mintField.title = token.mint;
     }
+
     const copyButton = node.querySelector(".copy-mint");
     if (copyButton) {
       copyButton.dataset.mint = token.mint;
     }
 
-    const usdPrice = price?.usdPrice ?? info?.usdPrice;
     const marketCap = info?.mcap;
-    const priceChange = price?.priceChange24h ?? info?.stats24h?.priceChange;
-
-    const priceField = node.querySelector(".price");
-    const priceLabel = usdPrice != null ? `\u4ef7\u683c ${formatCurrency(usdPrice)}` : "\u4ef7\u683c --";
-    priceField.textContent = priceLabel;
-    const previous = previousPrices.get(token.mint);
-    if (previous != null && usdPrice != null) {
-      const diff = usdPrice - previous;
-      if (Math.abs(diff) > 0) {
-        const trend = document.createElement("span");
-        trend.className = "price-trend";
-        trend.textContent = ` (${diff > 0 ? "\u2191" : "\u2193"}${formatNumber(Math.abs(diff), {
-          style: "currency",
-          maximumFractionDigits: usdPrice < 1 ? 6 : 4
-        })})`;
-        priceField.appendChild(trend);
-      }
+    const marketField = node.querySelector(".market-cap");
+    const metaContainer = node.querySelector(".token-meta");
+    if (marketField) {
+      const displayValue = marketCap != null ? formatCurrency(marketCap, { compact: true }) : "--";
+      marketField.textContent = displayValue;
+    }
+    if (metaContainer) {
+      metaContainer.hidden = marketCap == null;
     }
 
-    node.querySelector(".market-cap").textContent = marketCap != null ? formatCurrency(marketCap) : "--";
+    const statsTargets = [
+      { selector: ".stat-1h", label: "1H", value: info?.stats1h ?? price?.stats1h },
+      { selector: ".stat-6h", label: "6H", value: info?.stats6h ?? price?.stats6h },
+      { selector: ".stat-24h", label: "24H", value: info?.stats24h ?? price?.stats24h }
+    ];
 
-    const changeField = node.querySelector(".price-change");
-    changeField.textContent = formatPercent(priceChange);
-    changeField.classList.remove("gain", "loss");
-    if (priceChange != null) {
-      changeField.classList.add(priceChange >= 0 ? "gain" : "loss");
+    for (const { selector, label, value } of statsTargets) {
+      const nodeTarget = node.querySelector(selector);
+      if (!nodeTarget) continue;
+      let change = getPriceChange(value);
+      if (change == null && selector == ".stat-24h" && typeof (price?.priceChange24h) === "number") {
+        change = price.priceChange24h;
+      }
+      nodeTarget.textContent = change != null ? `${label} ${formatPercent(change)}` : `${label} --`;
+      nodeTarget.classList.remove("gain", "loss");
+      if (change != null && change !== 0) {
+        nodeTarget.classList.add(change > 0 ? "gain" : "loss");
+      }
     }
 
     const links = {
