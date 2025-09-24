@@ -1,49 +1,54 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Solana Meme Token &#x6536;&#x85cf;&#x5939;</title>
+    <title>Solana Meme Token 收藏夹</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body data-theme="dark">
+  <body data-theme="dark" data-view="expanded">
     <header class="app-header">
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="&#x5207;&#x6362;&#x4E3B;&#x9898;">
-        &#x1F319;
-      </button>
-      <h1>Solana Meme Token &#x6536;&#x85cf;&#x5939;</h1>
+
+      <h1>Solana Meme Token 收藏夹</h1>
+            <div class="header-toolbar">
+        <div class="header-actions">
+          <div class="refresh-inline">
+            <p class="last-updated" id="last-updated">数据加载中…</p>
+            <select id="refresh-select" class="refresh-inline-select" aria-label="刷新间隔">
+              <option value="180000">3 分钟</option>
+              <option value="300000" selected>5 分钟</option>
+              <option value="600000">10 分钟</option>
+            </select>
+            <button id="refresh-button" type="button" class="header-action refresh-action">立即刷新</button>
+          </div>
+          <button type="button" id="view-toggle" class="header-action view-toggle" aria-pressed="false" aria-label="切换到紧凑模式">
+            紧凑
+          </button>
+          <button type="button" id="theme-toggle" class="header-action theme-toggle" aria-pressed="false" aria-label="切换主题">
+            🌙
+          </button>
+        </div>
+      </div>
       <div class="controls">
         <form class="mint-form" id="mint-form">
-          <label class="mint-label" for="mint-input">&#x6dfb;&#x52a0; Token</label>
+          <!-- <label class="mint-label" for="mint-input">添加 Token</label> -->
           <div class="mint-input-row">
             <input
               id="mint-input"
               name="mint"
               type="text"
               autocomplete="off"
-              placeholder="&#x8f93;&#x5165; mint &#x5730;&#x5740;&#xff0c;&#x652f;&#x6301;&#x7c98;&#x8d34;&#x591a;&#x884c;&#x6216;&#x5e26;&#x6709; mint &#x5b57;&#x6bb5;&#x7684; JSON"
+              placeholder="输入 mint 地址，支持粘贴多行或带有 mint 字段的 JSON"
               required
             />
-            <button type="submit">&#x6dfb;&#x52a0;</button>
+            <button type="submit">添加</button>
           </div>
-          <p class="form-hint">&#x4f1a;&#x81ea;&#x52a8;&#x8bc6;&#x522b;&#x6587;&#x672c;&#x4e2d;&#x7684;&#x6709;&#x6548; mint&#xff0c;&#x907f;&#x514d;&#x91cd;&#x590d;&#x6dfb;&#x52a0;&#x3002;</p>
+          <p class="form-hint">会自动识别文本中的有效 mint，避免重复添加。</p>
           <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
         </form>
-        <div class="refresh-controls">
-          <label class="refresh-label" for="refresh-select">&#x5237;&#x65b0;&#x95f4;&#x9694;</label>
-          <div class="refresh-input-row">
-            <select id="refresh-select">
-              <option value="180000">3 &#x5206;&#x949f;</option>
-              <option value="300000" selected>5 &#x5206;&#x949f;</option>
-              <option value="600000">10 &#x5206;&#x949f;</option>
-            </select>
-            <button id="refresh-button" type="button">&#x7acb;&#x5373;&#x5237;&#x65b0;</button>
-          </div>
-        </div>
       </div>
-      <p class="last-updated" id="last-updated">&#x6570;&#x636e;&#x52a0;&#x8f7d;&#x4e2d;&#x2026;</p>
     </header>
-    <main style="padding-top: 6em;">
+    <main>
       <section class="token-grid" id="token-grid" aria-live="polite"></section>
     </main>
     <template id="token-card-template">
@@ -57,18 +62,18 @@
               <h2 class="symbol"></h2>
               <p class="token-name"></p>
               <div class="token-meta">
-                <span class="meta-label">&#x5e02;&#x503c;</span>
+                <span class="meta-label">市值</span>
                 <span class="market-cap"></span>
               </div>
               <div class="mint-row">
                 <span class="mint"></span>
-                <button type="button" class="copy-mint" aria-label="&#x590d;&#x5236;&#x5408;&#x7ea6;&#x5730;&#x5740;">
+                <button type="button" class="copy-mint" aria-label="复制合约地址">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a3 3 0 0 0-3 3v12h2V4a1 1 0 0 1 1-1h12z"/><path d="M20 5H8a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3zm1 15a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8a1 1 0 0 1 1 1z"/></svg>
                 </button>
               </div>
             </div>
           </div>
-          <button type="button" class="token-remove" aria-label="&#x79fb;&#x9664; Token">&#x00d7;</button>
+          <button type="button" class="token-remove" aria-label="移除 Token">×</button>
         </div>
         <div class="token-stats-row">
           <span class="stat stat-1h">1H --</span>
@@ -76,13 +81,13 @@
           <span class="stat stat-24h">24H --</span>
         </div>
         <div class="links">
-          <a class="link website" target="_blank" rel="noopener noreferrer">&#x5b98;&#x7f51;</a>
+          <a class="link website" target="_blank" rel="noopener noreferrer">官网</a>
           <a class="link twitter" target="_blank" rel="noopener noreferrer">Twitter</a>
           <a class="link telegram" target="_blank" rel="noopener noreferrer">Telegram</a>
         </div>
       </article>
     </template>
     <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="scripts/main.js"></script>
+    <script src="scripts/main.js"></script>
   </body>
 </html>

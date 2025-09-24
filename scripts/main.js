@@ -1,5 +1,4 @@
-
-const DEFAULT_MINTS = [
+﻿const DEFAULT_MINTS = [
   "EyiVQN5W1s2z3DPrbZnQuxyzQBPpzvc1inyScUxxpump",
   "3sLSDYfmbu5ZdmC7wbBUzvwRFE6S1dtrTUafuhhApump",
   "2GX27q7vmNSUx7P3Xpu9HfD7KP8VZXqGcPcK7bxpump",
@@ -8,6 +7,7 @@ const DEFAULT_MINTS = [
 
 const STORAGE_KEY = "solana-token-favs:mints";
 const THEME_STORAGE_KEY = "solana-token-favs:theme";
+const VIEW_STORAGE_KEY = "solana-token-favs:view";
 const MINT_PATTERN = /[1-9A-HJ-NP-Za-km-z]{32,}/g;
 const SINGLE_MINT_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,}$/;
 
@@ -25,6 +25,7 @@ const mintForm = document.getElementById("mint-form");
 const mintInput = document.getElementById("mint-input");
 const mintFeedback = document.getElementById("mint-feedback");
 const themeToggle = document.getElementById("theme-toggle");
+const viewToggle = document.getElementById("view-toggle");
 const toastRoot = document.getElementById("toast-root");
 
 let refreshTimerId = null;
@@ -50,7 +51,7 @@ function getStorage() {
   try {
     return window.localStorage;
   } catch (error) {
-    console.warn("\u65e0\u6cd5\u8bbf\u95ee localStorage\uff0c\u5c06\u4e0d\u4f1a\u6301\u4e45\u5316\u6536\u85cf\u3002", error);
+    console.warn("无法访问 localStorage，将不会持久化收藏。", error);
     return null;
   }
 }
@@ -66,7 +67,7 @@ function loadThemePreference() {
       return stored;
     }
   } catch (error) {
-    console.warn("\u8bfb\u53d6\u4e3b\u9898\u504f\u597d\u5931\u8d25\uff0c\u5c06\u6839\u636e\u7cfb\u7edf\u8bbe\u7f6e\u663e\u793a\u4e3b\u9898\u3002", error);
+    console.warn("读取主题偏好失败，将根据系统设置显示主题。", error);
   }
   return null;
 }
@@ -79,7 +80,7 @@ function saveThemePreference(theme) {
   try {
     storage.setItem(THEME_STORAGE_KEY, theme);
   } catch (error) {
-    console.warn("\u4fdd\u5b58\u4e3b\u9898\u504f\u597d\u5931\u8d25\u3002", error);
+    console.warn("保存主题偏好失败。", error);
   }
 }
 
@@ -93,8 +94,8 @@ function applyTheme(theme) {
   if (themeToggle) {
     const isLight = normalized === "light";
     themeToggle.setAttribute("aria-pressed", isLight ? "true" : "false");
-    themeToggle.textContent = isLight ? "\u{1F319}" : "\u2600\uFE0F";
-    const label = isLight ? "\u5207\u6362\u5230\u6697\u8272\u4e3b\u9898" : "\u5207\u6362\u5230\u4eae\u8272\u4e3b\u9898";
+    themeToggle.textContent = isLight ? "🌙" : "☀️";
+    const label = isLight ? "切换到暗色主题" : "切换到亮色主题";
     themeToggle.setAttribute("aria-label", label);
     themeToggle.title = label;
   }
@@ -140,6 +141,64 @@ if (themeToggle) {
   });
 }
 
+function loadViewPreference() {
+  const storage = getStorage();
+  if (!storage) {
+    return null;
+  }
+  try {
+    const stored = storage.getItem(VIEW_STORAGE_KEY);
+    if (stored === "compact" || stored === "expanded") {
+      return stored;
+    }
+  } catch (error) {
+    console.warn("读取卡片视图偏好失败。", error);
+  }
+  return null;
+}
+
+function saveViewPreference(view) {
+  const storage = getStorage();
+  if (!storage) {
+    return;
+  }
+  try {
+    storage.setItem(VIEW_STORAGE_KEY, view);
+  } catch (error) {
+    console.warn("保存卡片视图偏好失败。", error);
+  }
+}
+
+function applyView(view) {
+  const body = document.body;
+  if (!body) {
+    return;
+  }
+  const normalized = view === "compact" ? "compact" : "expanded";
+  body.dataset.view = normalized;
+  if (viewToggle) {
+    const isCompact = normalized === "compact";
+    viewToggle.setAttribute("aria-pressed", isCompact ? "true" : "false");
+    const label = isCompact ? "切换到完整模式" : "切换到紧凑模式";
+    viewToggle.textContent = isCompact ? "完整" : "紧凑";
+    viewToggle.setAttribute("aria-label", label);
+    viewToggle.title = label;
+  }
+  updateSymbolDisplays(normalized);
+}
+
+const preferredView = loadViewPreference() ?? "expanded";
+applyView(preferredView);
+
+if (viewToggle) {
+  viewToggle.addEventListener("click", () => {
+    const current = document.body?.dataset.view === "compact" ? "compact" : "expanded";
+    const next = current === "compact" ? "expanded" : "compact";
+    applyView(next);
+    saveViewPreference(next);
+  });
+}
+
 function isLikelyMint(value) {
   return typeof value === "string" && SINGLE_MINT_PATTERN.test(value.trim());
 }
@@ -169,7 +228,7 @@ function loadTrackedMints() {
       return deduped;
     }
   } catch (error) {
-    console.warn("\u8bfb\u53d6\u672c\u5730\u6536\u85cf\u5931\u8d25\uff0c\u4f7f\u7528\u9ed8\u8ba4\u5217\u8868\u3002", error);
+    console.warn("读取本地收藏失败，使用默认列表。", error);
   }
 
   return [...DEFAULT_MINTS];
@@ -184,7 +243,7 @@ function saveTrackedMints(mints) {
   try {
     storage.setItem(STORAGE_KEY, JSON.stringify(mints));
   } catch (error) {
-    console.warn("\u4fdd\u5b58\u6536\u85cf\u5217\u8868\u5931\u8d25\u3002", error);
+    console.warn("保存收藏列表失败。", error);
   }
 }
 
@@ -207,7 +266,6 @@ function getPriceChange(stats) {
 }
 
 function showFeedback(message, status = "info") {
-
   if (!mintFeedback) return;
   if (feedbackTimerId) {
     clearTimeout(feedbackTimerId);
@@ -244,7 +302,7 @@ async function fetchTokenInfos(mints) {
 
     const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error(`\u83b7\u53d6 Token \u57fa\u7840\u4fe1\u606f\u5931\u8d25: ${response.status}`);
+      throw new Error(`获取 Token 基础信息失败: ${response.status}`);
     }
 
     const data = await response.json();
@@ -263,7 +321,7 @@ async function fetchTokenPrices(mints) {
 
     const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error(`\u83b7\u53d6 Token \u4ef7\u683c\u5931\u8d25: ${response.status}`);
+      throw new Error(`获取 Token 价格失败: ${response.status}`);
     }
 
     const data = await response.json();
@@ -306,6 +364,33 @@ function formatMintPreview(mint) {
   if (!mint) return "--";
   if (mint.length <= 10) return mint;
   return `${mint.slice(0, 6)}...${mint.slice(-4)}`;
+}
+
+function normalizeSymbol(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+  const trimmed = value.trim().replace(/^\$/u, "");
+  return trimmed ? trimmed.toUpperCase() : "";
+}
+
+function formatSymbolForView(symbol, viewMode) {
+  const view = viewMode === "compact" ? "compact" : "expanded";
+  if (!symbol) return symbol;
+  return view === "compact" ? symbol : (symbol.startsWith("$") ? symbol : `$${symbol}`);
+}
+
+function updateSymbolDisplays(viewMode) {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const view = viewMode === "compact" ? "compact" : "expanded";
+  const symbols = document.querySelectorAll(".token-card .symbol");
+  symbols.forEach((element) => {
+    const baseSymbol = element.dataset.baseSymbol;
+    if (!baseSymbol) return;
+    element.textContent = formatSymbolForView(baseSymbol, view);
+  });
 }
 
 function showToast(message, status = "info") {
@@ -374,16 +459,16 @@ async function copyMintToClipboard(mint) {
       document.body.removeChild(textarea);
     }
     const label = formatMintPreview(mint);
-    showToast(`\u5df2\u590d\u5236 ${label}`, "success");
+    showToast(`已复制 ${label}`, "success");
   } catch (error) {
-    console.error("\u590d\u5236 mint \u5931\u8d25", error);
-    showToast("\u590d\u5236\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5", "error");
+    console.error("复制 mint 失败", error);
+    showToast("复制失败，请稍后重试", "error");
   }
 }
 
 function addTrackedMints(newMints) {
   if (!newMints.length) {
-    showFeedback("\u672a\u8bc6\u522b\u5230\u6709\u6548 mint \u5730\u5740\u3002", "error");
+    showFeedback("未识别到有效 mint 地址。", "error");
     return { added: 0, duplicates: 0 };
   }
 
@@ -399,7 +484,7 @@ function addTrackedMints(newMints) {
   }
 
   if (!uniqueNew.length) {
-    showFeedback("\u8fd9\u4e9b mint \u5df2\u7ecf\u5728\u5173\u6ce8\u5217\u8868\u4e2d\u4e86\u3002", "info");
+    showFeedback("这些 mint 已经在关注列表中了。", "info");
     return { added: 0, duplicates: duplicates.length };
   }
 
@@ -410,9 +495,9 @@ function addTrackedMints(newMints) {
     previousPrices.delete(mint);
   }
 
-  const addedText = `\u5df2\u6dfb\u52a0 ${uniqueNew.length} \u4e2a Token\u3002`;
+  const addedText = `已添加 ${uniqueNew.length} 个 Token。`;
   const message = duplicates.length
-    ? `${addedText} \u5ffd\u7565 ${duplicates.length} \u4e2a\u91cd\u590d\u9879\u3002`
+    ? `${addedText} 忽略 ${duplicates.length} 个重复项。`
     : addedText;
   showFeedback(message, "success");
 
@@ -434,11 +519,11 @@ function removeTrackedMint(mint) {
   renderTokens(latestSnapshot);
 
   if (!trackedMints.length) {
-    lastUpdated.textContent = "\u8bf7\u5148\u6dfb\u52a0\u9700\u8981\u8ddf\u8e2a\u7684 Token mint \u5730\u5740";
+    lastUpdated.textContent = "请先添加需要跟踪的 Token mint 地址";
   }
 
   const label = formatMintPreview(mint);
-  showFeedback(`\u5df2\u79fb\u9664 ${label}`, "info");
+  showFeedback(`已移除 ${label}`, "info");
 }
 
 function setLink(anchor, href) {
@@ -457,7 +542,7 @@ function renderTokens(tokens) {
   if (!tokens.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "\u6682\u65e0\u6536\u85cf Token\uff0c\u8bf7\u5728\u4e0a\u65b9\u8f93\u5165 mint \u5730\u5740\u4ee5\u5f00\u59cb\u5173\u6ce8\u3002";
+    empty.textContent = "暂无收藏 Token，请在上方输入 mint 地址以开始关注。";
     tokenGrid.append(empty);
     return;
   }
@@ -470,18 +555,19 @@ function renderTokens(tokens) {
     const icon = node.querySelector(".token-icon");
     icon.loading = "lazy";
     icon.src = info?.icon ?? "https://placehold.co/80x80/20232a/8b949e?text=Token";
-    icon.alt = info?.symbol ? `${info.symbol} \u56fe\u6807` : "Token \u56fe\u6807";
+    icon.alt = info?.symbol ? `${info.symbol} 图标` : "Token 图标";
 
     const symbolField = node.querySelector(".symbol");
     if (symbolField) {
       const fallback = token.mint.slice(0, 6).toUpperCase();
-      const rawSymbol = info?.symbol ? `$${info.symbol}` : fallback;
-      symbolField.textContent = rawSymbol;
+      const baseSymbol = normalizeSymbol(info?.symbol) || fallback;
+      symbolField.dataset.baseSymbol = baseSymbol;
+      symbolField.textContent = formatSymbolForView(baseSymbol, document.body?.dataset.view);
     }
 
     const nameField = node.querySelector(".token-name");
     if (nameField) {
-      nameField.textContent = info?.name ?? "\u672a\u77e5 Token";
+      nameField.textContent = info?.name ?? "未知 Token";
     }
 
     const mintField = node.querySelector(".mint");
@@ -542,17 +628,19 @@ function renderTokens(tokens) {
 
     tokenGrid.append(node);
   }
+
+  updateSymbolDisplays(document.body?.dataset.view);
 }
 
 async function refresh() {
   const mints = trackedMints.slice();
   if (!mints.length) {
     renderTokens([]);
-    lastUpdated.textContent = "\u8bf7\u5148\u6dfb\u52a0\u9700\u8981\u8ddf\u8e2a\u7684 Token mint \u5730\u5740";
+    lastUpdated.textContent = "请先添加需要跟踪的 Token mint 地址";
     return;
   }
 
-  lastUpdated.textContent = "\u6570\u636e\u52a0\u8f7d\u4e2d\u2026";
+  lastUpdated.textContent = "数据加载中…";
   tokenGrid.classList.add("loading");
 
   try {
@@ -577,16 +665,16 @@ async function refresh() {
     }
 
     const now = new Date();
-    lastUpdated.textContent = `\u6700\u540e\u66f4\u65b0\uff1a${now.toLocaleString("zh-CN", {
+    lastUpdated.textContent = `最后更新：${now.toLocaleString("zh-CN", {
       hour12: false
     })}`;
   } catch (error) {
     console.error(error);
     const errorBox = document.createElement("div");
     errorBox.className = "empty-state";
-    errorBox.textContent = `\u52a0\u8f7d\u5931\u8d25\uff1a${error.message}`;
+    errorBox.textContent = `加载失败：${error.message}`;
     tokenGrid.replaceChildren(errorBox);
-    lastUpdated.textContent = "\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
+    lastUpdated.textContent = "加载失败，请稍后重试";
   } finally {
     tokenGrid.classList.remove("loading");
   }
@@ -634,10 +722,28 @@ tokenGrid.addEventListener("click", (event) => {
   }
 
   const removeButton = event.target.closest(".token-remove");
-  if (!removeButton) return;
-  const { mint } = removeButton.dataset;
-  if (!mint) return;
-  removeTrackedMint(mint);
+  if (removeButton) {
+    const { mint } = removeButton.dataset;
+    if (mint) {
+      removeTrackedMint(mint);
+    }
+    return;
+  }
+
+  if (document.body?.dataset.view === "compact") {
+    const interactive = event.target.closest("button, a");
+    if (interactive) {
+      return;
+    }
+    const card = event.target.closest(".token-card");
+    if (!card) {
+      return;
+    }
+    const mint = card.dataset.mint;
+    if (mint) {
+      copyMintToClipboard(mint);
+    }
+  }
 });
 
 refreshButton.addEventListener("click", () => {
