@@ -1,4 +1,4 @@
-﻿const DEFAULT_MINTS = [
+const DEFAULT_MINTS = [
   "EyiVQN5W1s2z3DPrbZnQuxyzQBPpzvc1inyScUxxpump",
   "3sLSDYfmbu5ZdmC7wbBUzvwRFE6S1dtrTUafuhhApump",
   "2GX27q7vmNSUx7P3Xpu9HfD7KP8VZXqGcPcK7bxpump",
@@ -27,14 +27,19 @@ const mintFeedback = document.getElementById("mint-feedback");
 const themeToggle = document.getElementById("theme-toggle");
 const viewToggle = document.getElementById("view-toggle");
 const toastRoot = document.getElementById("toast-root");
+const searchInput = document.getElementById("token-search");
 
 let refreshTimerId = null;
 const previousPrices = new Map();
 let trackedMints = loadTrackedMints();
 let latestSnapshot = [];
+let searchQuery = '';
 let feedbackTimerId = null;
 let toastTimerId = null;
 let activeToast = null;
+
+let lastClipboardText = null;
+let clipboardReadInFlight = false;
 
 function chunk(array, size) {
   const result = [];
@@ -42,6 +47,19 @@ function chunk(array, size) {
     result.push(array.slice(i, i + size));
   }
   return result;
+}
+
+function isDocumentVisible() {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+  if (typeof document.visibilityState === 'string') {
+    return document.visibilityState === 'visible';
+  }
+  if (typeof document.hasFocus === 'function') {
+    return document.hasFocus();
+  }
+  return true;
 }
 
 function getStorage() {
@@ -294,6 +312,45 @@ function clearFeedback() {
   mintFeedback.hidden = true;
 }
 
+async function tryImportMintsFromClipboard() {
+  if (clipboardReadInFlight) {
+    return;
+  }
+  if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) {
+    return;
+  }
+
+  clipboardReadInFlight = true;
+
+  try {
+    const text = await navigator.clipboard.readText();
+    if (typeof text !== 'string') {
+      lastClipboardText = null;
+      return;
+    }
+    if (!text.trim()) {
+      lastClipboardText = null;
+      return;
+    }
+    if (text === lastClipboardText) {
+      return;
+    }
+
+    const mints = extractMints(text);
+    if (!mints.length) {
+      lastClipboardText = text;
+      return;
+    }
+
+    lastClipboardText = text;
+    addTrackedMints(mints);
+  } catch (error) {
+    console.warn('读取剪贴板内容失败', error);
+  } finally {
+    clipboardReadInFlight = false;
+  }
+}
+
 async function fetchTokenInfos(mints) {
   const infoMap = new Map();
   for (const mintChunk of chunk(mints, QUERY_LIMIT_INFO)) {
@@ -393,6 +450,29 @@ function updateSymbolDisplays(viewMode) {
   });
 }
 
+function applySearchFilter(tokens, query) {
+  if (!Array.isArray(tokens) || tokens.length === 0) {
+    return [];
+  }
+  if (!query) {
+    return tokens;
+  }
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return tokens;
+  }
+  return tokens.filter(({ mint, info }) => {
+    const mintValue = typeof mint === "string" ? mint.toLowerCase() : "";
+    const symbolRaw = normalizeSymbol(info?.symbol);
+    const symbolValue = symbolRaw ? symbolRaw.toLowerCase() : "";
+    return mintValue.includes(normalized) || symbolValue.includes(normalized);
+  });
+}
+
+function updateTokenView() {
+  const filtered = applySearchFilter(latestSnapshot, searchQuery);
+  renderTokens(filtered);
+}
 function showToast(message, status = "info") {
   if (!toastRoot) return;
 
@@ -516,7 +596,7 @@ function removeTrackedMint(mint) {
   previousPrices.delete(mint);
 
   latestSnapshot = latestSnapshot.filter((token) => token.mint !== mint);
-  renderTokens(latestSnapshot);
+  updateTokenView();
 
   if (!trackedMints.length) {
     lastUpdated.textContent = "请先添加需要跟踪的 Token mint 地址";
@@ -536,13 +616,16 @@ function setLink(anchor, href) {
 }
 
 function renderTokens(tokens) {
-  latestSnapshot = tokens;
   tokenGrid.replaceChildren();
 
+  const activeQuery = typeof searchQuery === "string" ? searchQuery.trim() : "";
+  const isFiltering = activeQuery.length > 0;
   if (!tokens.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "暂无收藏 Token，请在上方输入 mint 地址以开始关注。";
+    empty.textContent = isFiltering && latestSnapshot.length
+      ? "未找到匹配的 Token，换个 mint 或 symbol 试试"
+      : "暂无收藏 Token，请在上方输入 mint 地址以开始关注。";
     tokenGrid.append(empty);
     return;
   }
@@ -635,6 +718,7 @@ function renderTokens(tokens) {
 async function refresh() {
   const mints = trackedMints.slice();
   if (!mints.length) {
+    latestSnapshot = [];
     renderTokens([]);
     lastUpdated.textContent = "请先添加需要跟踪的 Token mint 地址";
     return;
@@ -655,7 +739,8 @@ async function refresh() {
       price: priceMap.get(mint) ?? null
     }));
 
-    renderTokens(merged);
+    latestSnapshot = merged;
+    updateTokenView();
 
     for (const { mint, price, info } of merged) {
       const value = price?.usdPrice ?? info?.usdPrice;
@@ -709,6 +794,34 @@ if (mintInput) {
   mintInput.addEventListener("input", () => {
     clearFeedback();
   });
+}
+
+if (searchInput) {
+  searchQuery = searchInput.value.trim();
+  const handleSearchInput = () => {
+    searchQuery = searchInput.value.trim();
+    updateTokenView();
+  };
+  searchInput.addEventListener("input", handleSearchInput);
+  searchInput.addEventListener("search", handleSearchInput);
+}
+
+const handlePageActivation = () => {
+  if (!isDocumentVisible()) {
+    return;
+  }
+  void tryImportMintsFromClipboard();
+};
+
+window.addEventListener('focus', handlePageActivation, false);
+window.addEventListener('pageshow', handlePageActivation, false);
+
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('visibilitychange', handlePageActivation, false);
+}
+
+if (isDocumentVisible()) {
+  void tryImportMintsFromClipboard();
 }
 
 tokenGrid.addEventListener("click", (event) => {
