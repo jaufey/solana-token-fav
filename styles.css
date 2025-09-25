@@ -466,7 +466,8 @@ body[data-view="compact"] .mint-row,
 body[data-view="compact"] .token-stats-row,
 body[data-view="compact"] .links,
 body[data-view="compact"] .token-remove,
-body[data-view="compact"] .token-meta .meta-label {
+body[data-view="compact"] .token-meta .meta-label,
+body[data-view="compact"] .axiom-link {
   display: none;
 }
 
@@ -608,7 +609,7 @@ body[data-view="compact"] .market-cap {
 .token-title h2.symbol {
   margin: 0;
   font-size: 1.25rem;
-  letter-spacing: 0.08em;
+  /* letter-spacing: 0.08em; */
   /* text-transform: uppercase; */
 }
 
@@ -651,7 +652,7 @@ body[data-view="compact"] .market-cap {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.55rem;
+  padding: 0.1rem 0.3rem;
   border-radius: 999px;
   border: 1px solid var(--surface-border);
   background: var(--surface-1);

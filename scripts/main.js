@@ -722,11 +722,13 @@ function renderTokens(tokens) {
     const links = {
       website: info?.website,
       twitter: info?.twitter,
-      telegram: info?.telegram
+      telegram: info?.telegram,
+      axiom: token.mint ? `https://axiom.trade/t/${token.mint}` : null
     };
     setLink(node.querySelector(".website"), links.website);
     setLink(node.querySelector(".twitter"), links.twitter);
     setLink(node.querySelector(".telegram"), links.telegram);
+    setLink(node.querySelector(".axiom"), links.axiom);
 
     const removeButton = node.querySelector(".token-remove");
     if (removeButton) {
@@ -829,6 +831,45 @@ if (searchInput) {
   searchInput.addEventListener("input", handleSearchInput);
   searchInput.addEventListener("search", handleSearchInput);
 }
+
+const shouldAutoFocusSearch = (event) => {
+  if (!searchInput) {
+    return false;
+  }
+  if (event.defaultPrevented) {
+    return false;
+  }
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return false;
+  }
+  const target = event.target;
+  if (!target) {
+    return true;
+  }
+  const tag = target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+    return false;
+  }
+  if (target.isContentEditable) {
+    return false;
+  }
+  if (event.key.length === 1) {
+    return true;
+  }
+  return event.key === 'Backspace' || event.key === 'Delete';
+};
+
+window.addEventListener('keydown', (event) => {
+  if (!shouldAutoFocusSearch(event)) {
+    return;
+  }
+  searchInput.focus({ preventScroll: true });
+  const value = searchInput.value || '';
+  if (typeof searchInput.setSelectionRange === 'function') {
+    const pos = value.length;
+    searchInput.setSelectionRange(pos, pos);
+  }
+});
 
 const handlePageActivation = () => {
   if (!isDocumentVisible()) {
