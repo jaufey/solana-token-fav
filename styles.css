@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #0d1117;
   --card-bg: rgba(13, 17, 23, 0.8);
   --card-border: rgba(255, 255, 255, 0.08);
@@ -526,9 +526,10 @@ body[data-view="compact"] .market-cap {
 .token-title .symbol {
   margin: 0;
   color: var(--muted);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   font-size: 0.78rem;
-  text-transform: uppercase;
+  font-family: 'SFMono-Regular', 'Consolas', 'Menlo', 'Monaco', 'Liberation Mono', 'Courier New', monospace;
+  text-transform: none;
 }
 
 .token-title .mint {
@@ -608,7 +609,7 @@ body[data-view="compact"] .market-cap {
   margin: 0;
   font-size: 1.25rem;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 .token-title .token-name {

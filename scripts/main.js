@@ -438,11 +438,14 @@ function formatMintPreview(mint) {
 }
 
 function normalizeSymbol(value) {
-  if (typeof value !== "string") {
-    return "";
+  if (typeof value !== 'string') {
+    return '';
   }
-  const trimmed = value.trim().replace(/^\$/u, "");
-  return trimmed ? trimmed.toUpperCase() : "";
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+  return trimmed.startsWith('$') ? trimmed.slice(1) : trimmed;
 }
 
 function formatSymbolForView(symbol, viewMode) {
