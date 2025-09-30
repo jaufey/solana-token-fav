@@ -1,0 +1,24 @@
+{
+  "name": "tokens-display",
+  "version": "1.0.0",
+  "description": "一个纯前端网页，用来跟踪并展示自选的 Solana Meme Token：\r - 使用 Jupiter Lite API 获取 Token 的基础信息与价格。\r - 展示图标、名称、符号、市值、流动性、24 小时涨跌等数据。\r - 支持查看常用社区链接（官网 / Twitter / Telegram）。\r - 可选择 3、5、10 分钟三个刷新频率，必要时也能手动立即刷新。",
+  "main": "grep.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaufey/solana-token-fav.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jaufey/solana-token-fav/issues"
+  },
+  "homepage": "https://github.com/jaufey/solana-token-fav#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.2"
+  }
+}

@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solana Meme Token 收藏夹</title>
+    <link rel="stylesheet" id="app-style-sheet" href="styles.css" />
+  </head>
+  <body data-theme="dark" data-view="expanded">
+    <header class="app-header">
+
+      <h1>Solana Meme Token 收藏夹</h1>
+            <div class="header-toolbar">
+        <div class="header-actions">
+          <div class="refresh-inline">
+            <p class="last-updated" id="last-updated">数据加载中…</p>
+            <select id="refresh-select" class="refresh-inline-select" aria-label="刷新间隔">
+              <option value="180000">3 分钟</option>
+              <option value="300000" selected>5 分钟</option>
+              <option value="600000">10 分钟</option>
+            </select>
+            <button id="refresh-button" type="button" class="header-action refresh-action">立即刷新</button>
+          </div>
+          <button type="button" id="view-toggle" class="header-action view-toggle" aria-pressed="false" aria-label="切换到紧凑模式">
+            紧凑
+          </button>
+          <select id="style-select" class="header-action style-select" aria-label="切换页面样式">
+            <option value="styles.css" selected>经典</option>
+            <option value="styles-gemini.css">新拟态</option>
+            <option value="styles-gemini-2.css">玻璃态</option>
+            <option value="styles-gemini-3.css">极繁主义</option>
+          </select>
+          <button type="button" id="theme-toggle" class="header-action theme-toggle" aria-pressed="false" aria-label="切换主题">
+            🌙
+          </button>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="search-bar">
+          <input
+            id="token-search"
+            type="search"
+            autocomplete="off"
+            placeholder="搜索 mint 或 symbol"
+            aria-label="搜索 mint 或 symbol"
+          />
+        </div>
+        <form class="mint-form" id="mint-form">
+          <!-- <label class="mint-label" for="mint-input">添加 Token</label> -->
+          <div class="mint-input-row">
+            <input
+              id="mint-input"
+              name="mint"
+              type="text"
+              autocomplete="off"
+              placeholder="输入 mint 地址，支持粘贴多行或带有 mint 字段的 JSON"
+              required
+            />
+            <button type="submit">添加</button>
+          </div>
+          <p class="form-hint">会自动识别文本中的有效 mint，避免重复添加。</p>
+          <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
+        </form>
+      </div>
+    </header>
+    <main>
+      <section class="token-grid" id="token-grid" aria-live="polite"></section>
+    </main>
+    <template id="token-card-template">
+      <article class="token-card">
+        <div class="token-image">
+          <img class="token-icon" alt="" />
+        </div>
+        <div class="token-header">
+          <div class="token-main">
+            <div class="token-title">
+              <h2 class="symbol"></h2>
+              <p class="token-name"></p>
+              <div class="token-meta">
+                <span class="meta-label">市值</span>
+                <span class="market-cap"></span>
+              </div>
+              <div class="mint-row">
+                <span class="mint"></span>
+                <button type="button" class="copy-mint" aria-label="复制合约地址">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a3 3 0 0 0-3 3v12h2V4a1 1 0 0 1 1-1h12z"/><path d="M20 5H8a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3zm1 15a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8a1 1 0 0 1 1 1z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="token-remove" aria-label="移除 Token">×</button>
+        </div>
+        <div class="token-stats-row">
+          <span class="stat stat-1h">1H --</span>
+          <span class="stat stat-6h">6H --</span>
+          <span class="stat stat-24h">24H --</span>
+        </div>
+        <div class="links">
+          <a class="link website" target="_blank" rel="noopener noreferrer">官网</a>
+          <a class="link twitter" target="_blank" rel="noopener noreferrer">Twitter</a>
+          <a class="link telegram" target="_blank" rel="noopener noreferrer">Telegram</a>
+          <a class="link axiom axiom-link" target="_blank" rel="noopener noreferrer">Axiom</a>
+        </div>
+      </article>
+    </template>
+    <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
+    <script src="scripts/main.js"></script>
+  </body>
+</html>

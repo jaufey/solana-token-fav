@@ -1,0 +1,980 @@
+:root {
+  /* Glassmorphism Base - Dark Theme (Default) */
+  --bg: #0d1117; /* Dark base color */
+  --bg-secondary: #1c2128; /* Slightly lighter dark color for gradient/depth */
+  
+  /* Glass Elements: Semi-transparent white/light color */
+  --glass-base: rgba(255, 255, 255, 0.08); 
+  --glass-border: rgba(255, 255, 255, 0.18); 
+  --glass-shadow: rgba(0, 0, 0, 0.2);
+  --glass-blur: 16px; /* Key property: Blur amount */
+
+  --card-bg: var(--glass-base);
+  --fg: #f2f6ff;
+  --muted: rgba(255, 255, 255, 0.6);
+  --accent: #00ffa3;
+  --accent-weak: rgba(0, 255, 163, 0.2);
+  --loss: #ff5c8a;
+  --gain: #6ee7b7;
+
+  /* Surfaces use glass base */
+  --surface-1: var(--glass-base);
+  --surface-2: rgba(255, 255, 255, 0.12);
+  --surface-border: var(--glass-border);
+
+  --layout-max-width: 960px;
+  font-family: "Inter", "SF Pro Display", "PingFang SC", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body[data-theme="light"] {
+  /* Glassmorphism Base - Light Theme */
+  --bg: #f5f8ff; /* Light base color */
+  --bg-secondary: #e6eefc; /* Slightly darker light color for gradient/depth */
+
+  /* Glass Elements: Semi-transparent black/dark color */
+  --glass-base: rgba(255, 255, 255, 0.5); 
+  --glass-border: rgba(0, 0, 0, 0.1); 
+  --glass-shadow: rgba(0, 0, 0, 0.1);
+  --glass-blur: 16px;
+
+  --card-bg: var(--glass-base);
+  --fg: #1b1324;
+  --muted: rgba(27, 19, 36, 0.62);
+  --accent: #ff5fbf;
+  --accent-weak: rgba(255, 95, 191, 0.18);
+  --loss: #e0487d;
+  --gain: #0f9664;
+
+  /* Surfaces use glass base */
+  --surface-1: var(--glass-base);
+  --surface-2: rgba(0, 0, 0, 0.08);
+  --surface-border: var(--glass-border);
+
+  color-scheme: light;
+  /* Added a background gradient for depth */
+  background: radial-gradient(circle at 10% 90%, var(--bg-secondary) 0%, transparent 40%),
+              radial-gradient(circle at 80% 20%, var(--bg-secondary) 0%, transparent 40%),
+              var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color-scheme: dark;
+  /* Added a background gradient for depth */
+  background: radial-gradient(circle at 10% 90%, var(--bg-secondary) 0%, transparent 40%),
+              radial-gradient(circle at 80% 20%, var(--bg-secondary) 0%, transparent 40%),
+              var(--bg);
+  color: var(--fg);
+  padding: 0 1rem 3rem;
+}
+
+.app-header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 0 1.5rem;
+  text-align: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  letter-spacing: 0.08em;
+}
+
+.header-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(var(--layout-max-width), 100%);
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.header-toolbar .last-updated {
+  margin-right: auto;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* --- Glassmorphism Button/Action Style --- */
+.header-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6rem;
+  height: 2.4rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  /* Light, semi-transparent border */
+  border: 1px solid var(--glass-border); 
+  background: var(--surface-1);
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: all 160ms ease;
+  /* Key Glassmorphism property */
+  backdrop-filter: blur(var(--glass-blur)); 
+  /* Subtle glass shadow */
+  box-shadow: 0 4px 10px var(--glass-shadow); 
+}
+
+.header-action.theme-toggle {
+  min-width: 2.4rem;
+  padding: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0;
+}
+.header-action.style-select {
+  display: inline-block;
+  min-width: 8.5rem;
+  height: 2.4rem;
+  padding: 0 2.4rem 0 0.85rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 1rem center, right 0.65rem center;
+  background-size: 0.45rem 0.45rem;
+  background-repeat: no-repeat;
+}
+
+.header-action.style-select::-ms-expand {
+  display: none;
+}
+
+.header-action.style-select option {
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+
+.header-action:hover {
+  /* Brighter background on hover */
+  background: var(--surface-2); 
+  box-shadow: 0 6px 15px var(--glass-shadow);
+}
+
+.header-action:active {
+  /* Push effect */
+  transform: scale(0.98); 
+  box-shadow: 0 2px 5px var(--glass-shadow);
+}
+
+.header-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.view-toggle {
+  font-size: 0.85rem;
+}
+
+.refresh-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* --- Glassmorphism Select/Dropdown Style --- */
+.refresh-inline-select {
+  background: var(--surface-1);
+  border: 1px solid var(--glass-border);
+  color: inherit;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 2px 4px var(--glass-shadow);
+}
+
+.refresh-inline-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.refresh-action {
+  min-width: 2.8rem;
+}
+
+.controls {
+  display: flex;
+  gap: 1.25rem;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(var(--layout-max-width), 100%);
+  margin: 0 auto;
+}
+
+.search-bar {
+  width: min(var(--layout-max-width), 100%);
+  margin: 0 auto;
+}
+
+/* --- Glassmorphism Input Style --- */
+.search-bar input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-1);
+  color: inherit;
+  font-size: 0.95rem;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 2px 4px var(--glass-shadow);
+}
+
+.search-bar input::placeholder {
+  color: var(--muted);
+}
+
+.search-bar input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.mint-form {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  width: min(560px, 100%);
+  white-space: nowrap;
+}
+
+.mint-input-row{
+  gap: 0.5rem;
+}
+
+.mint-label,
+.mint-input-row input {
+  min-width: 380px;
+  background: var(--surface-1);
+  color: inherit;
+  border: 1px solid var(--glass-border);
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 2px 4px var(--glass-shadow);
+}
+
+.mint-input-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.controls select,
+.controls button {
+  background: var(--surface-1);
+  color: inherit;
+  border: 1px solid var(--glass-border);
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  min-height: 2.2rem;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 4px 10px var(--glass-shadow);
+}
+
+.controls button {
+  background: var(--surface-1);
+}
+
+.controls button:hover {
+  background: var(--surface-2);
+  box-shadow: 0 6px 15px var(--glass-shadow);
+}
+
+.controls button:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 5px var(--glass-shadow);
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.form-feedback {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 1.2rem;
+}
+
+.form-feedback[data-status="error"] {
+  color: #ff8296;
+}
+
+.form-feedback[data-status="success"] {
+  color: var(--gain);
+}
+
+.form-feedback[data-status="info"] {
+  color: var(--muted);
+}
+
+.refresh-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(360px, 100%);
+  align-items: center;
+  margin: 0 auto;
+}
+
+.last-updated {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.token-grid {
+  margin-top: 2em !important;
+  width: min(var(--layout-max-width), 100%);
+  margin-inline: auto;
+  display: grid;
+  row-gap: 2rem;
+  column-gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.token-grid.loading {
+  opacity: 0.55;
+  transition: opacity 160ms ease;
+}
+
+/* --- Glassmorphism Card Style --- */
+.token-card {
+  position: relative;
+  background: var(--card-bg);
+  /* Light, semi-transparent border */
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 2.8rem 0.95rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  /* Key Glassmorphism property */
+  backdrop-filter: blur(var(--glass-blur));
+  overflow: visible;
+  transition: all 160ms ease;
+  /* Subtle glass shadow */
+  box-shadow: 0 8px 32px var(--glass-shadow);
+}
+
+.token-image {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  overflow: hidden;
+  /* Image border is slightly more opaque */
+  background: var(--surface-2); 
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 2px 8px var(--glass-shadow);
+  z-index: 2;
+}
+
+.token-card:hover {
+  transform: translateY(-2px);
+  /* Hover effect with slightly brighter glass background */
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 40px var(--glass-shadow);
+}
+
+body[data-theme="light"] .token-card:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+
+/* Compact view adjustments for Glassmorphism */
+body[data-view="compact"] .token-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  row-gap: 0.8rem;
+  column-gap: 0.8rem;
+}
+
+body[data-view="compact"] .token-card {
+  flex-direction: row;
+  align-items: center;
+  padding: 0.5rem 0.65rem;
+  gap: 0.4rem;
+  min-height: auto;
+  min-width: 0;
+  border-radius: 12px;
+  /* Subtle glass card shadow for compact view */
+  box-shadow: 0 4px 15px var(--glass-shadow);
+}
+
+body[data-view="compact"] .token-card:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+body[data-theme="light"][data-view="compact"] .token-card:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+
+body[data-view="compact"] .token-image {
+  position: static;
+  transform: none;
+  padding: 0.08rem;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-2);
+  box-shadow: none;
+  margin-right: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+body[data-view="compact"] .token-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  flex: 0 0 34px;
+}
+
+body[data-view="compact"] .token-header {
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+body[data-view="compact"] .token-main {
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+body[data-view="compact"] .token-title {
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+body[data-view="compact"] .token-title h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-view="compact"] .token-name,
+body[data-view="compact"] .mint-row,
+body[data-view="compact"] .token-stats-row,
+body[data-view="compact"] .links,
+body[data-view="compact"] .token-remove,
+body[data-view="compact"] .token-meta .meta-label,
+body[data-view="compact"] .axiom-link {
+  display: none;
+}
+
+body[data-view="compact"] .token-meta {
+  margin-left: auto;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+body[data-view="compact"] .market-cap {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.token-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.token-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.token-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-2);
+  object-fit: cover;
+}
+
+.token-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.token-title h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.token-title .symbol {
+  margin: 0;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  font-size: 0.78rem;
+  font-family: 'SFMono-Regular', 'Consolas', 'Menlo', 'Monaco', 'Liberation Mono', 'Courier New', monospace;
+  text-transform: none;
+}
+
+.token-title .mint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  font-family: "JetBrains Mono", "Fira Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.mint-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+  color: var(--muted);
+}
+
+/* --- Glassmorphism Copy Button Style --- */
+.copy-mint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-1);
+  color: inherit;
+  cursor: pointer;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 2px 4px var(--glass-shadow);
+}
+
+.copy-mint svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: currentColor;
+}
+
+.copy-mint:hover {
+  color: var(--accent);
+  background: var(--surface-2);
+}
+
+.copy-mint:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.copy-mint:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 3px var(--glass-shadow);
+}
+
+/* --- Glassmorphism Remove Button Style --- */
+.token-remove {
+  background: var(--surface-1);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: var(--muted);
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 2px 4px var(--glass-shadow);
+}
+
+.token-remove:hover {
+  color: var(--loss);
+  background: var(--surface-2);
+}
+
+.token-remove:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 3px var(--glass-shadow);
+}
+
+.token-title h2.symbol {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.token-title .token-name {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.token-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.token-meta .meta-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.token-meta .market-cap {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.token-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* --- Glassmorphism Stat Tag Style (Solid background) --- */
+.token-stats-row .stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  /* Note: Removed blur for small tags to maintain readability */
+  background: var(--surface-2); 
+  box-shadow: 0 1px 3px var(--glass-shadow);
+}
+
+.token-stats-row .stat.gain {
+  color: var(--gain);
+}
+
+.token-stats-row .stat.loss {
+  color: var(--loss);
+}
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* --- Glassmorphism Link Button Style --- */
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-1);
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.78rem;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 4px 10px var(--glass-shadow);
+}
+
+.link:hover {
+  color: var(--accent);
+  background: var(--surface-2);
+  box-shadow: 0 6px 15px var(--glass-shadow);
+}
+
+.link[hidden] {
+  display: none;
+}
+
+.price-change.gain {
+  color: var(--gain);
+}
+
+.price-change.loss {
+  color: var(--loss);
+}
+
+.market-cap {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.price-trend {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.audit {
+  border-top: none;
+  padding-top: 0.75rem;
+}
+
+.audit h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.audit ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.audit li {
+  font-size: 0.78rem;
+  color: var(--muted);
+  position: relative;
+}
+
+.audit li::marker {
+  color: var(--accent);
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  color: var(--muted);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  background: var(--surface-1);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 8px 32px var(--glass-shadow);
+}
+
+/* --- Media Queries --- */
+
+@media (max-width: 960px) {
+  /* No significant changes needed for Glassmorphism */
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    position: static;
+    transform: none;
+    align-items: stretch;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+.header-right {
+    justify-content: stretch;
+    gap: 0.5rem;
+  }
+
+.refresh-inline {
+    justify-content: stretch;
+  }
+
+.refresh-action {
+    min-width: 2.8rem;
+  }
+
+  .header-action {
+    min-width: auto;
+    height: 2.2rem;
+    padding: 0 0.7rem;
+  }
+
+  .header-action.theme-toggle {
+    width: 2.2rem;
+  }
+
+  .controls {
+    gap: 1rem;
+  }
+
+  .mint-input-row {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .controls select,
+  .controls button {
+    width: 100%;
+  }
+
+  .token-card {
+    padding: 0.85rem;
+  }
+}
+
+/* --- Glassmorphism Toast Style --- */
+.toast-root {
+  position: fixed;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 0.75rem;
+  z-index: 1000;
+  pointer-events: none;
+  width: min(90vw, 420px);
+  justify-items: center;
+}
+
+.toast {
+  min-width: 200px;
+  max-width: 320px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--card-bg);
+  color: var(--fg);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 8px 32px var(--glass-shadow);
+  transform: translateY(12px);
+  opacity: 0;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast[data-status="success"] {
+  border: 1px solid var(--gain);
+}
+
+.toast[data-status="error"] {
+  border: 1px solid var(--loss);
+}
+
+.toast-root .toast + .toast {
+  margin-top: 0;
+}
+
+
+@media (max-width: 640px) {
+  body {
+    padding: 0 0.75rem 2.5rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin: 0 auto 1.25rem;
+  }
+
+  .header-left {
+    justify-content: center;
+  }
+
+  .header-right {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .refresh-inline {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .refresh-inline-select {
+    width: 100%;
+  }
+
+  .refresh-action {
+    width: 100%;
+  }
+
+  .header-action {
+    min-width: auto;
+  }
+
+  .controls {
+    gap: 1rem;
+  }
+
+  .mint-input-row {
+    align-items: stretch;
+  }
+
+  .controls select,
+  .controls button {
+    width: 100%;
+  }
+
+  .token-card {
+    padding: 0.85rem;
+  }
+}
