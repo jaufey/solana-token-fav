@@ -882,6 +882,22 @@ function renderTokens(tokens, {canAnimate} = {canAnimate:false}) {
   }
 
   updateSymbolDisplays(document.body?.dataset.view);
+
+  // 使用 anime.js 为卡片添加入场动画
+  if (typeof anime === "function") {
+    anime({
+      targets: ".token-card",
+      translateY: [50, 0],
+      opacity: [0, 1],
+      delay: anime.stagger(50, { grid: [Math.ceil(tokens.length / 3), 3], from: "first" }),
+      duration: 800,
+      easing: "easeOutElastic(1, .8)",
+      // 初始时隐藏卡片，等待动画开始
+      begin: (anim) => {
+        anim.animatables.forEach(a => a.target.style.opacity = '0');
+      }
+    });
+  }
 }
 
 async function refresh() {
