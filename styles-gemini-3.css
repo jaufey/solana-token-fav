@@ -77,11 +77,6 @@ body[data-theme="light"] .app-header h1 {
   box-sizing: border-box;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-}
-
 body {
   margin: 0;
   min-height: 100vh;
@@ -267,6 +262,49 @@ body[data-theme="light"] .header-action:hover {
   transform: scale(1.05);
   border-color: var(--accent);
   box-shadow: none;
+}
+
+.control-select option,
+.refresh-inline-select option {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.filter-sort-controls {
+  display: flex;
+  gap: 1rem;
+  width: min(var(--layout-max-width), 100%);
+  margin: 1rem auto 0;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  border: 2px solid var(--surface-border);
+  border-radius: 12px;
+  background: var(--surface-1);
+  box-shadow: 3px 3px 0 0 var(--card-border);
+}
+
+.control-set {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 var(--bg);
+}
+
+.control-select,
+.control-button {
+  background: var(--surface-2);
+  border: 1px solid var(--surface-border);
+  color: inherit;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .controls {
@@ -1187,4 +1225,19 @@ body[data-theme="light"] .toast {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* --- Theme Toggle View Transition --- */
+@keyframes reveal {
+  from {
+    clip-path: circle(0 at var(--clip-path-origin, center));
+  }
+  to {
+    clip-path: circle(var(--clip-path-radius, 150%) at var(--clip-path-origin, center));
+  }
+}
+
+html.theme-transition::view-transition-new(root) {
+  animation: reveal 1s ease-in-out;
+  mix-blend-mode: normal; /* 确保新视图正常显示 */
 }

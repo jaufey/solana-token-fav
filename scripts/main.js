@@ -42,6 +42,9 @@ const toastRoot = document.getElementById("toast-root");
 const searchInput = document.getElementById("token-search");
 const backToTopButton = document.getElementById("back-to-top-button");
 const loader = document.getElementById("loader");
+const sortBySelect = document.getElementById("sort-by");
+const sortDirectionButton = document.getElementById("sort-direction");
+const filterMcapSelect = document.getElementById("filter-mcap");
 
 if (toastRoot) {
   toastRoot.style.position = 'fixed';
@@ -62,6 +65,12 @@ const previousPrices = new Map();
 let trackedMints = loadTrackedMints();
 let latestSnapshot = [];
 let searchQuery = '';
+let sortState = {
+  by: "default",
+  direction: "desc"
+};
+let filterState = { mcap: "all" };
+
 let feedbackTimerId = null;
 let toastTimerId = null;
 let activeToast = null;
@@ -178,12 +187,49 @@ if (preferredTheme.mediaQuery) {
 }
 
 if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const currentTheme = document.body?.dataset.theme === "light" ? "light" : "dark";
-    const nextTheme = currentTheme === "light" ? "dark" : "light";
-    userHasThemePreference = true;
-    applyTheme(nextTheme);
-    saveThemePreference(nextTheme);
+  themeToggle.addEventListener("click", (event) => {
+    const isDark = document.body.dataset.theme === 'dark';
+    const nextTheme = isDark ? 'light' : 'dark';
+
+    // 如果浏览器不支持 View Transitions API，则直接切换
+    if (!document.startViewTransition) {
+      userHasThemePreference = true;
+      applyTheme(nextTheme);
+      saveThemePreference(nextTheme);
+      return;
+    }
+
+    // 使用鼠标点击位置作为动画起点
+    const x = event.clientX;
+    const y = event.clientY;
+
+    // 基于点击位置计算到屏幕最远角的距离，作为圆形动画的最终半径
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    // 开始视图过渡
+    document.documentElement.classList.add('theme-transition');
+
+    const transition = document.startViewTransition(async () => {
+      userHasThemePreference = true;
+      applyTheme(nextTheme);
+      saveThemePreference(nextTheme);
+      // 等待下一帧，确保 DOM 更新完成
+      await new Promise(requestAnimationFrame);
+    });
+
+    // 动画结束后，清理临时类名
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove('theme-transition');
+    });
+
+    // 当过渡准备好时，执行动画
+    transition.ready.then(() => {
+      document.documentElement.style.setProperty('--clip-path-origin', `${x}px ${y}px`);
+      document.documentElement.style.setProperty('--clip-path-radius', `${endRadius}px`);
+    });
   });
 }
 
@@ -594,6 +640,72 @@ function updateSymbolDisplays(viewMode) {
   });
 }
 
+function applyFilters(tokens) {
+  if (!Array.isArray(tokens)) return [];
+  let filtered = tokens;
+
+  // 市值筛选
+  if (filterState.mcap !== "all") {
+    filtered = filtered.filter(token => {
+      const mcap = token.info?.mcap;
+      if (mcap == null) return false;
+      switch (filterState.mcap) {
+        case "under_1m": return mcap < 1_000_000;
+        case "1m_10m": return mcap >= 1_000_000 && mcap < 10_000_000;
+        case "10m_100m": return mcap >= 10_000_000 && mcap < 100_000_000;
+        case "over_100m": return mcap >= 100_000_000;
+        default: return true;
+      }
+    });
+  }
+
+  // 搜索筛选
+  if (searchQuery) {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (normalizedQuery) {
+      filtered = filtered.filter(({ mint, info }) => {
+        const mintValue = typeof mint === "string" ? mint.toLowerCase() : "";
+        const symbolRaw = normalizeSymbol(info?.symbol);
+        const symbolValue = symbolRaw ? symbolRaw.toLowerCase() : "";
+        return mintValue.includes(normalizedQuery) || symbolValue.includes(normalizedQuery);
+      });
+    }
+  }
+
+  return filtered;
+}
+
+function applySort(tokens) {
+  if (!Array.isArray(tokens) || sortState.by === "default") {
+    return tokens;
+  }
+
+  const dir = sortState.direction === "asc" ? 1 : -1;
+
+  const getSortValue = (token, sortBy) => {
+    switch (sortBy) {
+      case "mcap": return token.info?.mcap;
+      case "1h": return getPriceChange(token.info?.stats1h ?? token.price?.stats1h);
+      case "6h": return getPriceChange(token.info?.stats6h ?? token.price?.stats6h);
+      case "24h": return getPriceChange(token.info?.stats24h ?? token.price?.stats24h);
+      default: return null;
+    }
+  };
+
+  return [...tokens].sort((a, b) => {
+    const valA = getSortValue(a, sortState.by);
+    const valB = getSortValue(b, sortState.by);
+
+    if (valA == null && valB == null) return 0;
+    if (valA == null) return 1; // nulls at the end
+    if (valB == null) return -1;
+
+    if (valA < valB) return -1 * dir;
+    if (valA > valB) return 1 * dir;
+    return 0;
+  });
+}
+
 function applySearchFilter(tokens, query) {
   if (!Array.isArray(tokens) || tokens.length === 0) {
     return [];
@@ -614,7 +726,10 @@ function applySearchFilter(tokens, query) {
 }
 
 function updateTokenView() {
-  const filtered = applySearchFilter(latestSnapshot, searchQuery);
+  let processedTokens = applyFilters(latestSnapshot);
+  processedTokens = applySort(processedTokens);
+
+  const filtered = processedTokens; // for clarity
   const canAnimate = filtered.length <= VIEW_TRANSITION_CARD_LIMIT && shouldUseViewTransition();
   if (typeof document.startViewTransition === 'function' && canAnimate) {
     document.startViewTransition(() => renderTokens(filtered, {canAnimate}));
@@ -1005,6 +1120,31 @@ if (searchInput) {
   };
   searchInput.addEventListener("input", handleSearchInput);
   searchInput.addEventListener("search", handleSearchInput);
+}
+
+if (sortBySelect) {
+  sortBySelect.addEventListener("change", (e) => {
+    sortState.by = e.target.value;
+    updateTokenView();
+  });
+}
+
+if (sortDirectionButton) {
+  sortDirectionButton.addEventListener("click", () => {
+    const newDirection = sortState.direction === "asc" ? "desc" : "asc";
+    sortState.direction = newDirection;
+    sortDirectionButton.dataset.direction = newDirection;
+    sortDirectionButton.textContent = newDirection === "asc" ? "↑" : "↓";
+    sortDirectionButton.setAttribute("aria-label", newDirection === "asc" ? "切换为降序" : "切换为升序");
+    updateTokenView();
+  });
+}
+
+if (filterMcapSelect) {
+  filterMcapSelect.addEventListener("change", (e) => {
+    filterState.mcap = e.target.value;
+    updateTokenView();
+  });
 }
 
 const shouldAutoFocusSearch = (event) => {

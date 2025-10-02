@@ -219,6 +219,49 @@ body[data-theme="light"] .header-action:hover {
   min-width: 2.8rem;
 }
 
+.control-select option,
+.refresh-inline-select option {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.filter-sort-controls {
+  display: flex;
+  gap: 1rem;
+  width: min(var(--layout-max-width), 100%);
+  margin: 1rem auto 0;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  border-radius: 16px;
+  background: var(--card-bg);
+  box-shadow: var(--neum-base-shadow);
+}
+
+.control-set {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.control-select,
+.control-button {
+  background: var(--surface-1);
+  border: none;
+  color: inherit;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: var(--neum-inset-shadow);
+  min-width: 2.2rem;
+}
+
 .controls {
   display: flex;
   gap: 1rem;
@@ -1095,4 +1138,19 @@ body[data-theme="light"] .toast {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* --- Theme Toggle View Transition --- */
+@keyframes reveal {
+  from {
+    clip-path: circle(0 at var(--clip-path-origin, center));
+  }
+  to {
+    clip-path: circle(var(--clip-path-radius, 150%) at var(--clip-path-origin, center));
+  }
+}
+
+html.theme-transition::view-transition-new(root) {
+  animation: reveal 1s ease-in-out;
+  mix-blend-mode: normal; /* 确保新视图正常显示 */
 }
