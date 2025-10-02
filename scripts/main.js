@@ -188,48 +188,12 @@ if (preferredTheme.mediaQuery) {
 
 if (themeToggle) {
   themeToggle.addEventListener("click", (event) => {
-    const isDark = document.body.dataset.theme === 'dark';
-    const nextTheme = isDark ? 'light' : 'dark';
+    const isDark = document.body.dataset.theme === "dark";
+    const nextTheme = isDark ? "light" : "dark";
 
-    // 如果浏览器不支持 View Transitions API，则直接切换
-    if (!document.startViewTransition) {
-      userHasThemePreference = true;
-      applyTheme(nextTheme);
-      saveThemePreference(nextTheme);
-      return;
-    }
-
-    // 使用鼠标点击位置作为动画起点
-    const x = event.clientX;
-    const y = event.clientY;
-
-    // 基于点击位置计算到屏幕最远角的距离，作为圆形动画的最终半径
-    const endRadius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y)
-    );
-
-    // 开始视图过渡
-    document.documentElement.classList.add('theme-transition');
-
-    const transition = document.startViewTransition(async () => {
-      userHasThemePreference = true;
-      applyTheme(nextTheme);
-      saveThemePreference(nextTheme);
-      // 等待下一帧，确保 DOM 更新完成
-      await new Promise(requestAnimationFrame);
-    });
-
-    // 动画结束后，清理临时类名
-    transition.finished.finally(() => {
-      document.documentElement.classList.remove('theme-transition');
-    });
-
-    // 当过渡准备好时，执行动画
-    transition.ready.then(() => {
-      document.documentElement.style.setProperty('--clip-path-origin', `${x}px ${y}px`);
-      document.documentElement.style.setProperty('--clip-path-radius', `${endRadius}px`);
-    });
+    userHasThemePreference = true;
+    applyTheme(nextTheme);
+    saveThemePreference(nextTheme);
   });
 }
 
@@ -732,10 +696,10 @@ function updateTokenView() {
   const filtered = processedTokens; // for clarity
   const canAnimate = filtered.length <= VIEW_TRANSITION_CARD_LIMIT && shouldUseViewTransition();
   if (typeof document.startViewTransition === 'function' && canAnimate) {
-    document.startViewTransition(() => renderTokens(filtered, {canAnimate}));
+    document.startViewTransition(() => renderTokens(filtered, { canAnimate }));
     return;
   }
-  renderTokens(filtered, {canAnimate});
+  renderTokens(filtered, { canAnimate });
 }
 function showToast(message, status = "info") {
   if (!toastRoot) return;
@@ -899,7 +863,7 @@ function setLink(anchor, href) {
   }
 }
 
-function renderTokens(tokens, {canAnimate} = {canAnimate:false}) {
+function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
   tokenGrid.replaceChildren();
 
   const activeQuery = typeof searchQuery === "string" ? searchQuery.trim() : "";
