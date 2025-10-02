@@ -230,7 +230,9 @@ body {
 
 .filter-sort-controls {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
   width: min(var(--layout-max-width), 100%);
   margin: 1rem auto 0;
   flex-wrap: wrap;
@@ -240,6 +242,21 @@ body {
   background: var(--surface-1);
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: 0 4px 10px var(--glass-shadow);
+}
+
+.controls-left {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex: 0 1 auto; /* Do not grow, allow shrinking */
+}
+
+.controls-right {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .control-set {
@@ -265,33 +282,106 @@ body {
   cursor: pointer;
 }
 
-.controls {
+.add-group-wrapper {
+  position: relative;
+}
+
+.add-token-trigger {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  padding: 0;
   display: flex;
-  gap: 1rem;
-  width: min(var(--layout-max-width), 100%);
-  margin: 0 auto;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-1);
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 4px 10px var(--glass-shadow);
 }
 
-.control-group {
+.add-token-trigger:hover {
+  background: var(--surface-2);
+}
+
+.add-token-popover {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 0;
+  width: 400px;
+  max-width: 90vw;
+  background: var(--surface-1);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 32px var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur));
+  z-index: 10;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  pointer-events: none;
+}
+
+.add-token-popover.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.search-group-wrapper {
+  position: relative;
+}
+
+.search-token-trigger {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  padding: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-1);
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 4px 10px var(--glass-shadow);
 }
 
-.search-group {
-  flex: 1 1 280px;
+.search-token-trigger:hover {
+  background: var(--surface-2);
 }
 
-.add-group {
-  flex: 2 1 450px;
+.search-token-popover {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 0;
+  width: 250px;
+  background: var(--surface-1);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  box-shadow: 0 8px 32px var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur));
+  z-index: 10;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  pointer-events: none;
 }
 
-.search-bar {
-  width: 100%;
+.search-token-popover.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
-/* --- Glassmorphism Input Style --- */
-.search-bar input {
+#token-search {
   width: 100%;
   padding: 0.6rem 1rem;
   border-radius: 999px;
@@ -302,16 +392,6 @@ body {
   transition: all 160ms ease;
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: 0 2px 4px var(--glass-shadow);
-}
-
-.search-bar input::placeholder {
-  color: var(--muted);
-}
-
-.search-bar input:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .mint-form {
@@ -345,8 +425,13 @@ body {
   box-shadow: 0 0 0 1px var(--accent);
 }
 
-.controls select,
-.controls button {
+#token-search:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.mint-input-row button {
   background: var(--surface-1);
   color: inherit;
   border: 1px solid var(--glass-border);
@@ -471,6 +556,11 @@ body {
   /* Hover effect with slightly brighter glass background */
   background: rgba(255, 255, 255, 0.12);
   box-shadow: 0 10px 40px var(--glass-shadow);
+}
+
+.token-card.is-graduated {
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px var(--glass-shadow), 0 0 12px var(--accent-weak);
 }
 
 body[data-theme="light"] .token-card:hover {

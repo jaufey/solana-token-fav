@@ -34,6 +34,10 @@ const lastUpdated = document.getElementById("last-updated");
 const mintForm = document.getElementById("mint-form");
 const mintInput = document.getElementById("mint-input");
 const mintFeedback = document.getElementById("mint-feedback");
+const addTokenButton = document.getElementById("add-token-button");
+const addTokenPopover = document.getElementById("add-token-popover");
+const searchTokenButton = document.getElementById("search-token-button");
+const searchTokenPopover = document.getElementById("search-token-popover");
 const themeToggle = document.getElementById("theme-toggle");
 const viewToggle = document.getElementById("view-toggle");
 const styleSelect = document.getElementById("style-select");
@@ -45,6 +49,7 @@ const loader = document.getElementById("loader");
 const sortBySelect = document.getElementById("sort-by");
 const sortDirectionButton = document.getElementById("sort-direction");
 const filterMcapSelect = document.getElementById("filter-mcap");
+const filterGraduationSelect = document.getElementById("filter-graduation");
 
 if (toastRoot) {
   toastRoot.style.position = 'fixed';
@@ -69,7 +74,10 @@ let sortState = {
   by: "default",
   direction: "desc"
 };
-let filterState = { mcap: "all" };
+let filterState = {
+  mcap: "all",
+  graduation: "all"
+};
 
 let feedbackTimerId = null;
 let toastTimerId = null;
@@ -266,6 +274,19 @@ if (styleSelect) {
     const target = event.target;
     const value = typeof target?.value === "string" ? target.value : DEFAULT_STYLE;
     const nextStyle = normalizeStyleId(value) ?? DEFAULT_STYLE;
+
+    // 在切换样式前，强制关闭所有浮动层并重置状态
+    if (addTokenPopover && !addTokenPopover.hidden) {
+      addTokenPopover.classList.remove("visible");
+      addTokenPopover.hidden = true;
+      anime.remove(addTokenPopover); // 移除正在进行的动画
+    }
+    if (searchTokenPopover && !searchTokenPopover.hidden) {
+      searchTokenPopover.classList.remove("visible");
+      searchTokenPopover.hidden = true;
+      anime.remove(searchTokenPopover); // 移除正在进行的动画
+    }
+
     applyStyleSheet(nextStyle, { updateControl: false });
   });
 }
@@ -623,6 +644,36 @@ function applyFilters(tokens) {
     });
   }
 
+  // 毕业状态筛选
+  if (filterState.graduation !== "all") {
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+
+    filtered = filtered.filter(token => {
+      const graduatedAt = token.info?.graduatedAt;
+      const isGraduated = graduatedAt != null;
+
+      switch (filterState.graduation) {
+        case "not-graduated":
+          return !isGraduated;
+        case "graduated_1d":
+          return isGraduated && (now - graduatedAt) <= oneDay;
+        case "graduated_3d":
+          return isGraduated && (now - graduatedAt) <= 3 * oneDay;
+        case "graduated_7d":
+          return isGraduated && (now - graduatedAt) <= 7 * oneDay;
+        case "graduated_30d":
+          return isGraduated && (now - graduatedAt) <= 30 * oneDay;
+        case "graduated_over_30d":
+          return isGraduated && (now - graduatedAt) > 30 * oneDay;
+        default:
+          // This case should not be reached if filterState.graduation is not "all",
+          // but as a fallback, we don't filter.
+          return true;
+      }
+    });
+  }
+
   // 搜索筛选
   if (searchQuery) {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -649,6 +700,7 @@ function applySort(tokens) {
   const getSortValue = (token, sortBy) => {
     switch (sortBy) {
       case "mcap": return token.info?.mcap;
+      case "graduatedAt": return token.info?.graduatedAt;
       case "1h": return getPriceChange(token.info?.stats1h ?? token.price?.stats1h);
       case "6h": return getPriceChange(token.info?.stats6h ?? token.price?.stats6h);
       case "24h": return getPriceChange(token.info?.stats24h ?? token.price?.stats24h);
@@ -835,7 +887,7 @@ async function removeTrackedMint(mint) {
       opacity: 0,
       scale: 0.9,
       translateY: 20,
-      duration: 300,
+      duration: 150,
       easing: "easeInExpo",
     }).finished;
   }
@@ -890,6 +942,10 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
     }
 
     node.dataset.mint = token.mint;
+    if (info?.graduatedAt) {
+      node.classList.add('is-graduated');
+    }
+
     const imageWrapper = node.querySelector(".token-image");
     if (imageWrapper) {
       imageWrapper.style.viewTransitionName = buildViewTransitionName("token-image", token.mint);
@@ -938,7 +994,8 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
     const statsTargets = [
       { selector: ".stat-1h", label: "1H", value: info?.stats1h ?? price?.stats1h },
       { selector: ".stat-6h", label: "6H", value: info?.stats6h ?? price?.stats6h },
-      { selector: ".stat-24h", label: "24H", value: info?.stats24h ?? price?.stats24h }
+      { selector: ".stat-24h", label: "24H", value: info?.stats24h ?? price?.stats24h },
+      { selector: ".stat-graduated", label: "Graduated", value: info?.graduatedAt }
     ];
 
     for (const { selector, label, value } of statsTargets) {
@@ -948,10 +1005,22 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
       if (change == null && selector == ".stat-24h" && typeof (price?.priceChange24h) === "number") {
         change = price.priceChange24h;
       }
-      nodeTarget.textContent = change != null ? `${label} ${formatPercent(change)}` : `${label} --`;
-      nodeTarget.classList.remove("gain", "loss");
-      if (change != null && change !== 0) {
-        nodeTarget.classList.add(change > 0 ? "gain" : "loss");
+
+      if (selector === ".stat-graduated") {
+        if (value) {
+          const gradDate = new Date(value);
+          nodeTarget.textContent = `🎓 ${gradDate.toLocaleDateString('en-CA')}`;
+          nodeTarget.title = `毕业于 ${gradDate.toLocaleString()}`;
+          nodeTarget.hidden = false;
+        } else {
+          nodeTarget.hidden = true;
+        }
+      } else {
+        nodeTarget.textContent = change != null ? `${label} ${formatPercent(change)}` : `${label} --`;
+        nodeTarget.classList.remove("gain", "loss");
+        if (change != null && change !== 0) {
+          nodeTarget.classList.add(change > 0 ? "gain" : "loss");
+        }
       }
     }
 
@@ -982,8 +1051,8 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
       targets: ".token-card",
       translateY: [50, 0],
       opacity: [0, 1],
-      delay: anime.stagger(50, { grid: [Math.ceil(tokens.length / 3), 3], from: "first" }),
-      duration: 800,
+      delay: anime.stagger(20, { grid: [Math.ceil(tokens.length / 3), 3], from: "first" }),
+      duration: 300,
       easing: "easeOutElastic(1, .8)",
       // 初始时隐藏卡片，等待动画开始
       begin: (anim) => {
@@ -1012,11 +1081,19 @@ async function refresh() {
       fetchTokenPrices(mints)
     ]);
 
-    const merged = mints.map((mint) => ({
-      mint,
-      info: infoMap.get(mint) ?? null,
-      price: priceMap.get(mint) ?? null
-    }));
+    const merged = mints.map((mint) => {
+      const info = infoMap.get(mint) ?? null;
+      const price = priceMap.get(mint) ?? null;
+
+      // Pre-process graduatedAt from string to a numeric timestamp for reliable sorting and filtering.
+      if (info?.graduatedAt && typeof info.graduatedAt === 'string') {
+        const timestamp = new Date(info.graduatedAt).getTime();
+        if (!isNaN(timestamp)) {
+          info.graduatedAt = timestamp;
+        }
+      }
+      return { mint, info, price };
+    });
 
     latestSnapshot = merged;
     updateTokenView();
@@ -1107,6 +1184,13 @@ if (sortDirectionButton) {
 if (filterMcapSelect) {
   filterMcapSelect.addEventListener("change", (e) => {
     filterState.mcap = e.target.value;
+    updateTokenView();
+  });
+}
+
+if (filterGraduationSelect) {
+  filterGraduationSelect.addEventListener("change", (e) => {
+    filterState.graduation = e.target.value;
     updateTokenView();
   });
 }
@@ -1203,6 +1287,132 @@ tokenGrid.addEventListener("click", (event) => {
   }
 });
 
+if (addTokenButton && addTokenPopover) {
+  addTokenButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+
+    // 如果搜索浮层是打开的，则执行交换动画
+    if (searchTokenPopover && !searchTokenPopover.hidden && typeof anime === "function") {
+      // 在开始新动画前，移除所有相关的正在进行的动画，防止冲突
+      anime.remove(addTokenPopover);
+      anime.remove(searchTokenPopover);
+
+      searchTokenPopover.style.zIndex = '9';
+      addTokenPopover.style.zIndex = '10';
+      addTokenPopover.hidden = false;
+
+      const tl = anime.timeline({
+        easing: 'easeOutExpo',
+        duration: 150
+      });
+
+      tl.add({
+        targets: searchTokenPopover,
+        translateY: [0, -15],
+        opacity: [1, 0],
+        scale: [1, 0.95],
+      }, 0).add({
+        targets: addTokenPopover,
+        translateY: [-20, 0],
+        opacity: [0, 1],
+        scale: [0.95, 1],
+        begin: () => mintInput?.focus(),
+      }, 0).finished.then(() => {
+        searchTokenPopover.classList.remove("visible");
+        searchTokenPopover.hidden = true;
+        searchTokenPopover.style.zIndex = '';
+        searchTokenPopover.style.cssText = ''; // 彻底清除动画残留样式
+        addTokenPopover.style.zIndex = '';
+      });
+
+      addTokenPopover.classList.add("visible");
+      return;
+    }
+
+    // 否则，执行常规的打开/关闭动画
+    if (addTokenPopover.hidden) {
+      addTokenPopover.hidden = false;
+      requestAnimationFrame(() => {
+        addTokenPopover.classList.add("visible");
+        mintInput?.focus();
+      });
+    } else {
+      addTokenPopover.classList.remove("visible");
+    }
+  });
+
+  addTokenPopover.addEventListener("transitionend", () => {
+    if (!addTokenPopover.classList.contains("visible") && !anime.running.some(a => a.animatables.some(an => an.target === addTokenPopover))) {
+      addTokenPopover.hidden = true;
+    }
+  });
+
+  addTokenPopover.addEventListener('click', e => e.stopPropagation());
+}
+
+if (searchTokenButton && searchTokenPopover) {
+  searchTokenButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+
+    // 如果添加浮层是打开的，则执行交换动画
+    if (addTokenPopover && !addTokenPopover.hidden && typeof anime === "function") {
+      // 在开始新动画前，移除所有相关的正在进行的动画，防止冲突
+      anime.remove(addTokenPopover);
+      anime.remove(searchTokenPopover);
+
+      addTokenPopover.style.zIndex = '9';
+      searchTokenPopover.style.zIndex = '10';
+      searchTokenPopover.hidden = false;
+
+      const tl = anime.timeline({
+        easing: 'easeOutExpo',
+        duration: 150
+      });
+
+      tl.add({
+        targets: addTokenPopover,
+        translateY: [0, -15],
+        opacity: [1, 0],
+        scale: [1, 0.95],
+      }, 0).add({
+        targets: searchTokenPopover,
+        translateY: [-20, 0],
+        opacity: [0, 1],
+        scale: [0.95, 1],
+        begin: () => searchInput?.focus(),
+      }, 0).finished.then(() => {
+        addTokenPopover.classList.remove("visible");
+        addTokenPopover.hidden = true;
+        addTokenPopover.style.zIndex = '';
+        addTokenPopover.style.cssText = ''; // 彻底清除动画残留样式
+        searchTokenPopover.style.zIndex = '';
+      });
+
+      searchTokenPopover.classList.add("visible");
+      return;
+    }
+
+    // 否则，执行常规的打开/关闭动画
+    if (searchTokenPopover.hidden) {
+      searchTokenPopover.hidden = false;
+      requestAnimationFrame(() => {
+        searchTokenPopover.classList.add("visible");
+        searchInput?.focus();
+      });
+    } else {
+      searchTokenPopover.classList.remove("visible");
+    }
+  });
+
+  searchTokenPopover.addEventListener("transitionend", () => {
+    if (!searchTokenPopover.classList.contains("visible") && !anime.running.some(a => a.animatables.some(an => an.target === searchTokenPopover))) {
+      searchTokenPopover.hidden = true;
+    }
+  });
+
+  searchTokenPopover.addEventListener('click', e => e.stopPropagation());
+}
+
 // 页面加载时，为标题和工具栏添加入场动画
 if (typeof anime === "function") {
   // 1. 将标题文字分割成独立的 span，为逐字动画做准备
@@ -1220,8 +1430,8 @@ if (typeof anime === "function") {
     targets: '.app-header h1 .letter', // 动画目标为每个独立的字母
     translateY: [-40, 0], // 从上方缓缓落下
     opacity: [0, 1],
-    duration: 800, // 缩短动画时长，使其更快
-    delay: anime.stagger(50), // 减小每个字母的延迟，节奏更紧凑
+    duration: 250,
+    delay: anime.stagger(15),
     easing: 'easeOutExpo'
   });
 }
@@ -1237,4 +1447,15 @@ refreshSelect.addEventListener("change", () => {
 
 refresh().then(() => {
   scheduleRefresh();
+});
+
+document.addEventListener("click", (event) => {
+  if (addTokenPopover && !addTokenPopover.hidden && !addTokenPopover.contains(event.target) && !addTokenButton.contains(event.target)) {
+      addTokenPopover.classList.remove("visible");
+  }
+  if (searchTokenPopover && !searchTokenPopover.hidden) {
+    if (!searchTokenPopover.contains(event.target) && !searchTokenButton.contains(event.target)) {
+      searchTokenPopover.classList.remove("visible");
+    }
+  }
 });

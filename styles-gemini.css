@@ -227,7 +227,9 @@ body[data-theme="light"] .header-action:hover {
 
 .filter-sort-controls {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
   width: min(var(--layout-max-width), 100%);
   margin: 1rem auto 0;
   flex-wrap: wrap;
@@ -235,6 +237,21 @@ body[data-theme="light"] .header-action:hover {
   border-radius: 16px;
   background: var(--card-bg);
   box-shadow: var(--neum-base-shadow);
+}
+
+.controls-left {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex: 0 1 auto; /* Do not grow, allow shrinking */
+}
+
+.controls-right {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .control-set {
@@ -262,33 +279,98 @@ body[data-theme="light"] .header-action:hover {
   min-width: 2.2rem;
 }
 
-.controls {
+.add-group-wrapper {
+  position: relative;
+}
+
+.add-token-trigger {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  padding: 0;
   display: flex;
-  gap: 1rem;
-  width: min(var(--layout-max-width), 100%);
-  margin: 0 auto;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--surface-1);
+  cursor: pointer;
+  transition: all 160ms ease;
+  box-shadow: 6px 6px 12px var(--neum-dark-shadow), -6px -6px 12px var(--neum-light-shadow);
 }
 
-.control-group {
+.add-token-trigger:active {
+  box-shadow: var(--neum-inset-shadow);
+}
+
+.add-token-popover {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 0;
+  width: 400px;
+  max-width: 90vw;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: var(--neum-base-shadow);
+  z-index: 10;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  pointer-events: none;
+}
+
+.add-token-popover.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.search-group-wrapper {
+  position: relative;
+}
+
+.search-token-trigger {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  padding: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--surface-1);
+  cursor: pointer;
+  transition: all 160ms ease;
+  box-shadow: 6px 6px 12px var(--neum-dark-shadow), -6px -6px 12px var(--neum-light-shadow);
 }
 
-.search-group {
-  flex: 1 1 280px;
+.search-token-trigger:active {
+  box-shadow: var(--neum-inset-shadow);
 }
 
-.add-group {
-  flex: 2 1 450px;
+.search-token-popover {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 0;
+  width: 250px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 0.75rem;
+  box-shadow: var(--neum-base-shadow);
+  z-index: 10;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  pointer-events: none;
 }
 
-.search-bar {
-  width: 100%;
+.search-token-popover.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
-/* --- Neumorphism Input Style --- */
-.search-bar input {
+#token-search {
   width: 100%;
   padding: 0.6rem 1rem;
   border-radius: 999px;
@@ -297,23 +379,12 @@ body[data-theme="light"] .header-action:hover {
   color: inherit;
   font-size: 0.95rem;
   transition: all 160ms ease;
-  /* Neumorphism Shadow - Concave */
   box-shadow: var(--neum-inset-shadow);
 }
 
-.search-bar input::placeholder {
-  color: var(--muted);
-}
-
-.search-bar input:focus-visible {
+#token-search:focus-visible {
   outline: none;
-  /* Keep a subtle color focus ring */
   box-shadow: var(--neum-inset-shadow), 0 0 0 3px var(--accent-weak);
-  background: var(--surface-1); /* Don't change background color */
-}
-
-body[data-theme="light"] .search-bar input:focus-visible {
-  box-shadow: var(--neum-inset-shadow), 0 0 0 3px rgba(255, 95, 191, 0.2);
 }
 
 .mint-form {
@@ -347,8 +418,11 @@ body[data-theme="light"] .search-bar input:focus-visible {
   box-shadow: var(--neum-inset-shadow), 0 0 0 3px var(--accent-weak);
 }
 
-/* Applies raised style to select and button in controls */
-.controls select,
+body[data-theme="light"] #token-search:focus-visible {
+  box-shadow: var(--neum-inset-shadow), 0 0 0 3px rgba(255, 95, 191, 0.2);
+}
+
+/* Applies raised style to button in controls */
 .controls button {
   background: var(--surface-1);
   color: inherit;
@@ -360,6 +434,19 @@ body[data-theme="light"] .search-bar input:focus-visible {
   min-height: 2.2rem;
   transition: all 160ms ease;
   /* Neumorphism Shadow - Raised */
+  box-shadow: 6px 6px 12px var(--neum-dark-shadow), -6px -6px 12px var(--neum-light-shadow);
+}
+
+.mint-input-row button {
+  background: var(--surface-1);
+  color: inherit;
+  border: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  min-height: 2.2rem;
+  transition: all 160ms ease;
   box-shadow: 6px 6px 12px var(--neum-dark-shadow), -6px -6px 12px var(--neum-light-shadow);
 }
 
@@ -477,6 +564,11 @@ body[data-theme="light"] .controls button {
   transform: translateY(-2px); /* Slight lift on hover */
   /* Slightly more intense raised effect on hover */
   box-shadow: 14px 14px 28px var(--neum-dark-shadow), -14px -14px 28px var(--neum-light-shadow);
+}
+
+.token-card.is-graduated {
+  /* Add a subtle inset accent color shadow to indicate graduation */
+  box-shadow: 12px 12px 24px var(--neum-dark-shadow), -12px -12px 24px var(--neum-light-shadow), inset 0 0 8px var(--accent-weak);
 }
 
 body[data-theme="light"] .token-card {
