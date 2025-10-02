@@ -307,6 +307,12 @@ body {
   background: var(--surface-2);
 }
 
+.add-token-trigger.is-active {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .add-token-popover {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -319,7 +325,7 @@ body {
   padding: 1rem;
   box-shadow: 0 8px 32px var(--glass-shadow);
   backdrop-filter: blur(var(--glass-blur));
-  z-index: 10;
+  z-index: 100;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 200ms ease, transform 200ms ease;
@@ -357,6 +363,12 @@ body {
   background: var(--surface-2);
 }
 
+.search-token-trigger.is-active {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .search-token-popover {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -368,7 +380,7 @@ body {
   padding: 0.75rem;
   box-shadow: 0 8px 32px var(--glass-shadow);
   backdrop-filter: blur(var(--glass-blur));
-  z-index: 10;
+  z-index: 100;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 200ms ease, transform 200ms ease;

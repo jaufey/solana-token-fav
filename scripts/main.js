@@ -1293,6 +1293,9 @@ if (addTokenButton && addTokenPopover) {
 
     // 如果搜索浮层是打开的，则执行交换动画
     if (searchTokenPopover && !searchTokenPopover.hidden && typeof anime === "function") {
+      addTokenButton.classList.add('is-active');
+      searchTokenButton.classList.remove('is-active');
+
       // 在开始新动画前，移除所有相关的正在进行的动画，防止冲突
       anime.remove(addTokenPopover);
       anime.remove(searchTokenPopover);
@@ -1332,12 +1335,14 @@ if (addTokenButton && addTokenPopover) {
     // 否则，执行常规的打开/关闭动画
     if (addTokenPopover.hidden) {
       addTokenPopover.hidden = false;
+      addTokenButton.classList.add('is-active');
       requestAnimationFrame(() => {
         addTokenPopover.classList.add("visible");
         mintInput?.focus();
       });
     } else {
       addTokenPopover.classList.remove("visible");
+      addTokenButton.classList.remove('is-active');
     }
   });
 
@@ -1356,6 +1361,9 @@ if (searchTokenButton && searchTokenPopover) {
 
     // 如果添加浮层是打开的，则执行交换动画
     if (addTokenPopover && !addTokenPopover.hidden && typeof anime === "function") {
+      searchTokenButton.classList.add('is-active');
+      addTokenButton.classList.remove('is-active');
+
       // 在开始新动画前，移除所有相关的正在进行的动画，防止冲突
       anime.remove(addTokenPopover);
       anime.remove(searchTokenPopover);
@@ -1395,12 +1403,14 @@ if (searchTokenButton && searchTokenPopover) {
     // 否则，执行常规的打开/关闭动画
     if (searchTokenPopover.hidden) {
       searchTokenPopover.hidden = false;
+      searchTokenButton.classList.add('is-active');
       requestAnimationFrame(() => {
         searchTokenPopover.classList.add("visible");
         searchInput?.focus();
       });
     } else {
       searchTokenPopover.classList.remove("visible");
+      searchTokenButton.classList.remove('is-active');
     }
   });
 
@@ -1452,10 +1462,12 @@ refresh().then(() => {
 document.addEventListener("click", (event) => {
   if (addTokenPopover && !addTokenPopover.hidden && !addTokenPopover.contains(event.target) && !addTokenButton.contains(event.target)) {
       addTokenPopover.classList.remove("visible");
+      addTokenButton.classList.remove('is-active');
   }
   if (searchTokenPopover && !searchTokenPopover.hidden) {
     if (!searchTokenPopover.contains(event.target) && !searchTokenButton.contains(event.target)) {
       searchTokenPopover.classList.remove("visible");
+      searchTokenButton.classList.remove('is-active');
     }
   }
 });

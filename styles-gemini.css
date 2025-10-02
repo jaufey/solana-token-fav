@@ -302,6 +302,11 @@ body[data-theme="light"] .header-action:hover {
   box-shadow: var(--neum-inset-shadow);
 }
 
+.add-token-trigger.is-active {
+  box-shadow: var(--neum-inset-shadow);
+  color: var(--accent);
+}
+
 .add-token-popover {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -346,6 +351,11 @@ body[data-theme="light"] .header-action:hover {
 
 .search-token-trigger:active {
   box-shadow: var(--neum-inset-shadow);
+}
+
+.search-token-trigger.is-active {
+  box-shadow: var(--neum-inset-shadow);
+  color: var(--accent);
 }
 
 .search-token-popover {

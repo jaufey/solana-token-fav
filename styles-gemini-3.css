@@ -349,6 +349,12 @@ body[data-theme="light"] .header-action:hover {
   transform: scale(1.05);
 }
 
+.add-token-trigger.is-active {
+  border-color: var(--accent);
+  transform: scale(1.05);
+  color: var(--accent);
+}
+
 .add-token-popover {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -399,6 +405,12 @@ body[data-theme="light"] .header-action:hover {
   transform: scale(1.05);
 }
 
+.search-token-trigger.is-active {
+  border-color: var(--accent);
+  transform: scale(1.05);
+  color: var(--accent);
+}
+
 .search-token-popover {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -427,7 +439,7 @@ body[data-theme="light"] .header-action:hover {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 999px;
-  border: 1px solid var(--surface-border);
+  border: 1px solid var(--surface-border); /* 保持边框一致 */
   background: var(--surface-1);
   color: inherit;
   font-size: 0.95rem;
@@ -471,7 +483,7 @@ body[data-theme="light"] .header-action:hover {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(0, 255, 163, 0.18);
-  background: var(--accent-weak);
+  /* background: var(--accent-weak); */ /* 移除 focus 时的背景色变化，保持一致性 */
 }
 
 body[data-theme="light"] #token-search:focus-visible {
