@@ -204,7 +204,7 @@ body {
 
 .header-action:hover {
   border-color: var(--accent);
-  background: var(--accent-weak);
+  background-color: var(--accent-weak);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
@@ -271,20 +271,10 @@ body[data-theme="light"] .header-action:hover {
 
 .controls {
   display: flex;
-  gap: 1.25rem;
-  flex-direction: column;
-  align-items: stretch;
   width: min(var(--layout-max-width), 100%);
   margin: 0 auto;
   gap: 1.5rem;
-  /* 增加元素间距，让内容更“挤” */
   flex-wrap: wrap;
-  /* justify-items: center; */
-}
-
-.search-bar {
-  width: min(var(--layout-max-width), 100%);
-  margin: 0 auto;
 }
 
 .search-bar input {
@@ -315,23 +305,18 @@ body[data-theme="light"] .search-bar input:focus-visible {
 
 .mint-form {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  /* flex-direction: column; */
+  flex-direction: column;
   gap: 0.5rem;
-  width: min(560px, 100%);
-  /* margin: 0 auto; */
-  white-space: nowrap;
+  width: 100%;
 }
 
 .mint-input-row {
+  display: flex;
   gap: 0.5rem;
+  width: 100%;
 }
-
-.mint-label,
 .mint-input-row input {
-  /* flex: 1; */
-  min-width: 380px;
+  flex: 1;
   background: var(--surface-1);
   color: inherit;
   border: 1px solid var(--surface-border);
@@ -361,21 +346,11 @@ body[data-theme="light"] .search-bar input:focus-visible {
 
 .controls button {
   background: linear-gradient(135deg, var(--accent), var(--gain));
-  /* 鲜艳渐变 */
   color: var(--bg);
   font-weight: bold;
-  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 50px;
-  /* 药丸形状 */
   cursor: pointer;
-  text-transform: uppercase;
   transition: all 0.2s ease-in-out;
-  box-shadow:
-    3px 3px 0 0 #ff00ff,
-    /* 块状阴影/描边 */
-    -3px -3px 0 0 #007aff;
-  letter-spacing: 1px;
 }
 
 body[data-theme="light"] .controls button {
@@ -383,11 +358,7 @@ body[data-theme="light"] .controls button {
 }
 
 .controls button:hover {
-  transform: scale(1.05) skewY(-1deg);
-  /* 放大和倾斜，增加互动趣味性 */
-  box-shadow:
-    6px 6px 0 0 #ff00ff,
-    -6px -6px 0 0 #007aff;
+  transform: scale(1.05);
 }
 
 .controls button:active {
@@ -1180,4 +1151,40 @@ body[data-theme="light"] .toast {
 .back-to-top:hover {
   background: var(--accent-weak);
   transform: scale(1.05);
+}
+
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  z-index: 999;
+  opacity: 1;
+  transition: opacity 300ms ease-in-out;
+}
+
+.loader[hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--surface-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

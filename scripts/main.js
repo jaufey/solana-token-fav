@@ -41,6 +41,7 @@ const styleSheetLink = document.getElementById("app-style-sheet");
 const toastRoot = document.getElementById("toast-root");
 const searchInput = document.getElementById("token-search");
 const backToTopButton = document.getElementById("back-to-top-button");
+const loader = document.getElementById("loader");
 
 if (toastRoot) {
   toastRoot.style.position = 'fixed';
@@ -741,24 +742,37 @@ function addTrackedMints(newMints) {
   return { added: uniqueNew.length, duplicates: duplicates.length };
 }
 
-function removeTrackedMint(mint) {
+async function removeTrackedMint(mint) {
   if (!trackedMints.includes(mint)) {
     return;
   }
 
-  trackedMints = trackedMints.filter((value) => value !== mint);
-  saveTrackedMints(trackedMints);
-  previousPrices.delete(mint);
+  const card = tokenGrid.querySelector(`.token-card[data-mint="${mint}"]`);
 
+  // 如果找到了卡片并且 anime.js 可用，则播放退场动画
+  if (card && typeof anime === "function") {
+    await anime({
+      targets: card,
+      opacity: 0,
+      scale: 0.9,
+      translateY: 20,
+      duration: 300,
+      easing: "easeInExpo",
+    }).finished;
+  }
+
+  // 动画结束后，更新数据并重新渲染
+  trackedMints = trackedMints.filter((m) => m !== mint);
+  saveTrackedMints(trackedMints);
   latestSnapshot = latestSnapshot.filter((token) => token.mint !== mint);
-  updateTokenView();
+  updateTokenView(); // 重新渲染以确保布局正确
 
   if (!trackedMints.length) {
     lastUpdated.textContent = "请先添加需要跟踪的 Token mint 地址";
   }
 
   const label = formatMintPreview(mint);
-  showFeedback(`已移除 ${label}`, "info");
+  showToast(`已移除 ${label}`, "info");
 }
 
 function setLink(anchor, href) {
@@ -910,7 +924,8 @@ async function refresh() {
   }
 
   lastUpdated.textContent = "数据加载中…";
-  tokenGrid.classList.add("loading");
+  if (loader) loader.hidden = false;
+  tokenGrid.classList.add("loading"); // 保留此类以兼容旧逻辑或样式
 
   try {
     const [infoMap, priceMap] = await Promise.all([
@@ -946,6 +961,7 @@ async function refresh() {
     tokenGrid.replaceChildren(errorBox);
     lastUpdated.textContent = "加载失败，请稍后重试";
   } finally {
+    if (loader) loader.hidden = true;
     tokenGrid.classList.remove("loading");
   }
 }
@@ -1062,7 +1078,7 @@ tokenGrid.addEventListener("click", (event) => {
   if (removeButton) {
     const { mint } = removeButton.dataset;
     if (mint) {
-      removeTrackedMint(mint);
+      void removeTrackedMint(mint);
     }
     return;
   }
@@ -1082,6 +1098,29 @@ tokenGrid.addEventListener("click", (event) => {
     }
   }
 });
+
+// 页面加载时，为标题和工具栏添加入场动画
+if (typeof anime === "function") {
+  // 1. 将标题文字分割成独立的 span，为逐字动画做准备
+  const titleEl = document.querySelector('.app-header h1');
+  if (titleEl) {
+    const text = titleEl.textContent.trim();
+    titleEl.innerHTML = text.split('').map(letter =>
+      // 使用 display: inline-block 确保 transform 生效
+      `<span class="letter" style="display: inline-block; white-space: pre;">${letter}</span>`
+    ).join('');
+  }
+
+  // 2. 创建标题逐字动画
+  anime({
+    targets: '.app-header h1 .letter', // 动画目标为每个独立的字母
+    translateY: [-40, 0], // 从上方缓缓落下
+    opacity: [0, 1],
+    duration: 800, // 缩短动画时长，使其更快
+    delay: anime.stagger(50), // 减小每个字母的延迟，节奏更紧凑
+    easing: 'easeOutExpo'
+  });
+}
 
 refreshButton.addEventListener("click", () => {
   refresh();

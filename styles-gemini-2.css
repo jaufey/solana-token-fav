@@ -102,6 +102,9 @@ body {
   width: min(var(--layout-max-width), 100%);
   margin: 0 auto;
   flex-wrap: wrap;
+  margin-top: 1rem; /* 增加与标题的间距 */
+  /* 增加 flex 布局以实现两端对齐 */
+  justify-content: space-between;
 }
 
 .header-toolbar .last-updated {
@@ -116,6 +119,8 @@ body {
   gap: 0.6rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+  /* 确保动作按钮组作为一个整体 */
+  margin-left: auto;
 }
 
 /* --- Glassmorphism Button/Action Style --- */
@@ -175,7 +180,7 @@ body {
 
 .header-action:hover {
   /* Brighter background on hover */
-  background: var(--surface-2); 
+  background-color: var(--surface-2); 
   box-shadow: 0 6px 15px var(--glass-shadow);
 }
 
@@ -224,22 +229,33 @@ body {
 
 .controls {
   display: flex;
-  gap: 1.25rem;
-  flex-direction: column;
-  align-items: stretch;
+  gap: 1rem;
   width: min(var(--layout-max-width), 100%);
   margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-group {
+  flex: 1 1 280px;
+}
+
+.add-group {
+  flex: 2 1 450px;
 }
 
 .search-bar {
-  width: min(var(--layout-max-width), 100%);
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* --- Glassmorphism Input Style --- */
 .search-bar input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: var(--surface-1);
@@ -262,20 +278,18 @@ body {
 
 .mint-form {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  flex-direction: column;
   gap: 0.5rem;
-  width: min(560px, 100%);
-  white-space: nowrap;
+  width: 100%;
 }
 
 .mint-input-row{
+  display: flex;
   gap: 0.5rem;
+  width: 100%;
 }
-
-.mint-label,
 .mint-input-row input {
-  min-width: 380px;
+  flex: 1;
   background: var(--surface-1);
   color: inherit;
   border: 1px solid var(--glass-border);
@@ -1027,4 +1041,40 @@ body[data-view="compact"] .token-card:hover .token-remove {
 
 .back-to-top:hover {
   background: var(--surface-2);
+}
+
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  z-index: 999;
+  opacity: 1;
+  transition: opacity 300ms ease-in-out;
+}
+
+.loader[hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--surface-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

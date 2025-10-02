@@ -36,34 +36,40 @@
         </div>
       </div>
       <div class="controls">
-        <div class="search-bar">
-          <input
-            id="token-search"
-            type="search"
-            autocomplete="off"
-            placeholder="搜索 mint 或 symbol"
-            aria-label="搜索 mint 或 symbol"
-          />
-        </div>
-        <form class="mint-form" id="mint-form">
-          <!-- <label class="mint-label" for="mint-input">添加 Token</label> -->
-          <div class="mint-input-row">
+        <div class="control-group search-group">
+          <div class="search-bar">
             <input
-              id="mint-input"
-              name="mint"
-              type="text"
+              id="token-search"
+              type="search"
               autocomplete="off"
-              placeholder="输入 mint 地址，支持粘贴多行或带有 mint 字段的 JSON"
-              required
+              placeholder="搜索 mint 或 symbol"
+              aria-label="搜索 mint 或 symbol"
             />
-            <button type="submit">添加</button>
           </div>
-          <p class="form-hint">会自动识别文本中的有效 mint，避免重复添加。</p>
-          <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
-        </form>
+        </div>
+        <div class="control-group add-group">
+          <form class="mint-form" id="mint-form">
+            <div class="mint-input-row">
+              <input
+                id="mint-input"
+                name="mint"
+                type="text"
+                autocomplete="off"
+                placeholder="输入 mint 地址，支持粘贴多行或带有 mint 字段的 JSON"
+                required
+              />
+              <button type="submit">添加</button>
+            </div>
+            <p class="form-hint">会自动识别文本中的有效 mint，避免重复添加。</p>
+            <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
+          </form>
+        </div>
       </div>
     </header>
     <main>
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+      </div>
       <section class="token-grid" id="token-grid" aria-live="polite"></section>
     </main>
     <template id="token-card-template">

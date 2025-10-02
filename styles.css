@@ -145,7 +145,7 @@ body {
 
 .header-action:hover {
   border-color: var(--accent);
-  background: var(--accent-weak);
+  background-color: var(--accent-weak);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
@@ -197,22 +197,32 @@ body[data-theme="light"] .header-action:hover {
 
 .controls {
   display: flex;
-  gap: 1.25rem;
-  flex-direction: column;
-  align-items: stretch;
+  gap: 1rem;
   width: min(var(--layout-max-width), 100%);
   margin: 0 auto;
-  /* justify-items: center; */
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-group {
+  flex: 1 1 280px;
+}
+
+.add-group {
+  flex: 2 1 450px;
 }
 
 .search-bar {
-  width: min(var(--layout-max-width), 100%);
-  margin: 0 auto;
+  width: 100%;
 }
 
 .search-bar input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--surface-border);
   background: var(--surface-1);
@@ -238,23 +248,18 @@ body[data-theme="light"] .search-bar input:focus-visible {
 
 .mint-form {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  /* flex-direction: column; */
+  flex-direction: column;
   gap: 0.5rem;
-  width: min(560px, 100%);
-  /* margin: 0 auto; */
-  white-space: nowrap;
+  width: 100%;
 }
 
 .mint-input-row{
+  display: flex;
   gap: 0.5rem;
+  width: 100%;
 }
-
-.mint-label,
 .mint-input-row input {
-  /* flex: 1; */
-  min-width: 380px;
+  flex: 1;
   background: var(--surface-1);
   color: inherit;
   border: 1px solid var(--surface-border);
@@ -884,6 +889,42 @@ body[data-view="compact"] .market-cap {
   border-color: var(--accent);
 }
 
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  z-index: 999;
+  opacity: 1;
+  transition: opacity 300ms ease-in-out;
+}
+
+.loader[hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--surface-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 
 
 
@@ -1044,11 +1085,6 @@ body[data-theme="light"] .toast {
   .mint-input-row {
     /* flex-direction: column; */
     align-items: stretch;
-  }
-
-  .controls select,
-  .controls button {
-    width: 100%;
   }
 
   .token-card {
