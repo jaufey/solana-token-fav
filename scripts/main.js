@@ -40,6 +40,7 @@ const styleSelect = document.getElementById("style-select");
 const styleSheetLink = document.getElementById("app-style-sheet");
 const toastRoot = document.getElementById("toast-root");
 const searchInput = document.getElementById("token-search");
+const backToTopButton = document.getElementById("back-to-top-button");
 
 if (toastRoot) {
   toastRoot.style.position = 'fixed';

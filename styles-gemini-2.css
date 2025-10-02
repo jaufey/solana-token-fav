@@ -516,7 +516,6 @@ body[data-view="compact"] .token-name,
 body[data-view="compact"] .mint-row,
 body[data-view="compact"] .token-stats-row,
 body[data-view="compact"] .links,
-body[data-view="compact"] .token-remove,
 body[data-view="compact"] .token-meta .meta-label,
 body[data-view="compact"] .axiom-link {
   display: none;
@@ -535,6 +534,24 @@ body[data-view="compact"] .token-meta {
 body[data-view="compact"] .market-cap {
   font-size: 0.78rem;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+body[data-view="compact"] .token-remove {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  /* 增加背景以提高对比度，避免文字透出 */
+  background: var(--surface-2);
+}
+
+body[data-view="compact"] .token-card:hover .token-remove {
+  opacity: 1;
+  pointer-events: auto;
   white-space: nowrap;
 }
 
@@ -977,4 +994,37 @@ body[data-view="compact"] .market-cap {
   .token-card {
     padding: 0.85rem;
   }
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-1);
+  color: var(--fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease, background 150ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 4px 10px var(--glass-shadow);
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.back-to-top:hover {
+  background: var(--surface-2);
 }

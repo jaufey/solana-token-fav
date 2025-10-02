@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #0d1117;
   --card-bg: rgba(13, 17, 23, 0.8);
   --card-border: rgba(255, 255, 255, 0.08);
@@ -408,6 +408,7 @@ body[data-view="compact"] .token-grid {
 }
 
 body[data-view="compact"] .token-card {
+  position: relative;
   flex-direction: row;
   align-items: center;
   padding: 0.5rem 0.65rem;
@@ -431,6 +432,22 @@ body[data-theme="light"][data-view="compact"] .token-card {
 
 body[data-theme="light"][data-view="compact"] .token-card:hover {
   box-shadow: 0 22px 40px rgba(221, 165, 206, 0.24);
+}
+
+body[data-view="compact"] .token-remove {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  background: var(--card-bg);
+}
+
+body[data-view="compact"] .token-card:hover .token-remove {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 body[data-view="compact"] .token-image {
@@ -494,7 +511,6 @@ body[data-view="compact"] .token-name,
 body[data-view="compact"] .mint-row,
 body[data-view="compact"] .token-stats-row,
 body[data-view="compact"] .links,
-body[data-view="compact"] .token-remove,
 body[data-view="compact"] .token-meta .meta-label,
 body[data-view="compact"] .axiom-link {
   display: none;
@@ -836,6 +852,38 @@ body[data-view="compact"] .market-cap {
   }
 }
 
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-1);
+  color: var(--fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.back-to-top:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
+
 
 
 
@@ -1007,9 +1055,3 @@ body[data-theme="light"] .toast {
     padding: 0.85rem;
   }
 }
-
-
-
-
-
-

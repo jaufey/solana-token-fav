@@ -2,8 +2,8 @@
   /* Y2K 核心颜色变量 (使用极其饱和的颜色) */
   --bg: #1c002b;
   /* 深紫色/午夜蓝，提供夜店或太空背景感 */
-  --card-bg: rgba(255, 105, 180, 0.9);
-  /* 泡泡糖粉，半透明增加塑料感/层次感 */
+  --card-bg: rgba(28, 0, 43, 0.8);
+  /* 深紫色背景，提高对比度，保留粉色用于边框和高光 */
   --card-border: #007aff;
   /* 电光蓝，用于强调边框 */
   --fg: #ffffff;
@@ -53,9 +53,24 @@ body[data-theme="light"] {
   --surface-2: rgba(0, 0, 0, 0.1);
   --surface-border: rgba(0, 0, 0, 0.2);
   color-scheme: light;
-  background: radial-gradient(circle at 20% 18%, rgba(255, 180, 220, 0.28), transparent 44%),
-    radial-gradient(circle at 82% -4%, rgba(255, 225, 248, 0.55), transparent 52%),
-    var(--bg);
+  /* 增加与暗色模式一致的条纹背景 */
+  background-image: repeating-linear-gradient(-45deg,
+      var(--bg),
+      var(--bg) 20px,
+      var(--surface-1) 20px, /* 使用适合亮色模式的条纹颜色 */
+      var(--surface-1) 40px),
+    radial-gradient(circle at top left,
+      var(--accent) 0%,
+      transparent 25%);
+}
+
+/* 针对亮色模式标题进行微调，提高可读性 */
+body[data-theme="light"] .app-header h1 {
+  font-weight: 600; /* 降低字重 */
+  /* 减小阴影偏移，避免字母粘连 */
+  text-shadow:
+    -1px -1px 0px var(--loss),
+    1px 1px 0px var(--accent);
 }
 
 * {
@@ -99,15 +114,16 @@ body {
 .app-header h1 {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 2.5rem);
-  letter-spacing: 0.08em;
-  color: var(--accent);
+  color: var(--fg); /* 改为更亮的白色 */
+  /* 使用“故障艺术”风格的阴影，更有叛逆感 */
   text-shadow:
-    2px 2px var(--loss),
-    /* 双色块状阴影 */
-    4px 4px var(--card-border);
+    -2px -2px 0px var(--loss),
+    2px 2px 0px var(--accent);
   letter-spacing: 2px;
   font-size: 2.5rem;
   margin-bottom: 1rem;
+  transform: skew(-5deg) rotate(-1deg); /* 增加倾斜和旋转，打破常规 */
+  font-weight: 700; /* 调整字重，避免过粗 */
 }
 
 .header-toolbar {
@@ -363,7 +379,7 @@ body[data-theme="light"] .search-bar input:focus-visible {
 }
 
 body[data-theme="light"] .controls button {
-  background: linear-gradient(120deg, var(--accent-weak), rgba(255, 182, 229, 0.4));
+  background: linear-gradient(120deg, var(--accent-weak), rgba(234, 91, 184, 0.778));
 }
 
 .controls button:hover {
@@ -438,8 +454,8 @@ body[data-theme="light"] .controls button {
 
 .token-card {
   position: relative;
-  background: var(--card-bg);
-  border: 4px solid var(--card-border);
+  background: var(--card-bg); /* 使用新的深色背景 */
+  border: 2px solid var(--surface-border); /* 使用粉色作为边框 */
   /* 粗边框 */
   border-radius: 20px;
   /* 极度圆角，营造“泡泡”感 */
@@ -450,7 +466,8 @@ body[data-theme="light"] .controls button {
   backdrop-filter: blur(10px) saturate(180%);
   /* 磨砂玻璃效果，向未来主义致敬 */
   box-shadow:
-    0 0 15px var(--accent-weak),
+    0 0 8px var(--accent-weak), /* 减弱绿色外发光 */
+    0 0 12px 1px var(--loss), /* 减弱品红色内描边发光 */
     /* 发光效果 */
     0 10px 20px rgba(0, 0, 0, 0.5);
   /* 强烈的投影 */
@@ -584,7 +601,6 @@ body[data-view="compact"] .token-name,
 body[data-view="compact"] .mint-row,
 body[data-view="compact"] .token-stats-row,
 body[data-view="compact"] .links,
-body[data-view="compact"] .token-remove,
 body[data-view="compact"] .token-meta .meta-label,
 body[data-view="compact"] .axiom-link {
   display: none;
@@ -602,7 +618,26 @@ body[data-view="compact"] .token-meta {
 
 body[data-view="compact"] .market-cap {
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 400; /* 降低字重以提高可读性 */
+  white-space: nowrap;
+}
+
+body[data-view="compact"] .token-remove {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  /* 增加背景和边框以适配主题 */
+  background: var(--bg);
+  border: 1px solid var(--surface-border);
+}
+
+body[data-view="compact"] .token-card:hover .token-remove {
+  opacity: 1;
+  pointer-events: auto;
   white-space: nowrap;
 }
 
@@ -641,14 +676,14 @@ body[data-view="compact"] .market-cap {
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.2;
-  color: var(--accent);
-  text-shadow:
-    2px 2px var(--loss),
-    /* 双色块状阴影 */
-    4px 4px var(--card-border);
+  color: var(--fg); /* 将文字颜色改为白色以提高对比度 */
+  text-shadow: 2px 2px 0 var(--loss); /* 使用单层、清晰的块状阴影 */
   letter-spacing: 2px;
   font-size: 2.5rem;
   margin-bottom: 1rem;
+  /* 增加描边以强化轮廓，提高可读性 */
+  -webkit-text-stroke: 1px var(--accent);
+  paint-order: stroke fill; /* 确保描边在填充之下，文字更清晰 */
 }
 
 .token-title .symbol {
@@ -763,7 +798,7 @@ body[data-view="compact"] .market-cap {
 }
 
 .token-meta .market-cap {
-  font-weight: 600;
+  font-weight: 400; /* 降低字重以提高可读性 */
   font-size: 0.95rem;
 }
 
@@ -834,7 +869,7 @@ body[data-view="compact"] .market-cap {
 }
 
 .market-cap {
-  font-weight: 600;
+  font-weight: 400; /* 降低字重以提高可读性 */
   font-size: 1.05rem;
 }
 
@@ -1113,4 +1148,36 @@ body[data-theme="light"] .toast {
   .token-card {
     padding: 0.85rem;
   }
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease, background 150ms ease;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.back-to-top:hover {
+  background: var(--accent-weak);
+  transform: scale(1.05);
 }
