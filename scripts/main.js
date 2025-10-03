@@ -1,32 +1,16 @@
-const DEFAULT_MINTS = [
-  "Eppcp4FhG6wmaRno3omWWvKsZHbzucVLR316SdXopump",
-  "wCtiCRJz69a5Mqkk2nHmvQwBGQCrUvM8fELoFGqpump",
-  "H8xQ6poBjB9DTPMDTKWzWPrnxu4bDEhybxiouF8Ppump",
-  "623fhWRdnYVxQKe1RcZvVHxTDeAftRGBApUtzrRKpump"
-];
+import {
+  applyTheme, applyView, applyDisplayMode, applyClipboardWatchState, applyStyleSheet,
+  loadTrackedMints, saveTrackedMints,
+  getDisplayMode, getSortState, getFilterState, setSortState, setFilterState
+} from './ui-state.js';
+import { fetchTokenInfos, fetchTokenPrices } from './api.js';
+import { showToast, closeActiveToast, isCleanupToastActive, showFeedback, clearFeedback, updateAnimatedCounter } from './ui-interactions.js';
 
-const STORAGE_KEY = "solana-token-favs:mints";
-const THEME_STORAGE_KEY = "solana-token-favs:theme";
-const VIEW_STORAGE_KEY = "solana-token-favs:view";
-const DISPLAY_STORAGE_KEY = "solana-token-favs:display";
-const CLIPBOARD_WATCH_STORAGE_KEY = "solana-token-favs:clipboardWatch";
-const STYLE_STORAGE_KEY = "solana-token-favs:style";
-const STYLE_OPTIONS = [
-  "styles.css",
-  "styles-gemini.css",
-  "styles-gemini-2.css",
-  "styles-gemini-3.css"
-];
-const DEFAULT_STYLE = STYLE_OPTIONS[0];
+
+
 const MINT_PATTERN = /[1-9A-HJ-NP-Za-km-z]{32,}/g;
 const SINGLE_MINT_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,}$/;
-
 const VIEW_TRANSITION_CARD_LIMIT = 36;
-
-const TOKEN_INFO_API = "https://lite-api.jup.ag/tokens/v2/search";
-const TOKEN_PRICE_API = "https://lite-api.jup.ag/price/v3";
-const QUERY_LIMIT_INFO = 100;
-const QUERY_LIMIT_PRICE = 50;
 
 const tokenGrid = document.getElementById("token-grid");
 const template = document.getElementById("token-card-template");
@@ -35,63 +19,30 @@ const refreshSelect = document.getElementById("refresh-select");
 const lastUpdated = document.getElementById("last-updated");
 const mintForm = document.getElementById("mint-form");
 const mintInput = document.getElementById("mint-input");
-const mintFeedback = document.getElementById("mint-feedback");
-const addTokenButton = document.getElementById("add-token-button");
-const addTokenPopover = document.getElementById("add-token-popover");
-const searchTokenButton = document.getElementById("search-token-button");
-const searchTokenPopover = document.getElementById("search-token-popover");
-const themeToggle = document.getElementById("theme-toggle");
-const viewToggle = document.getElementById("view-toggle");
-const clipboardToggleButton = document.getElementById("clipboard-toggle-button");
-const displayToggle = document.getElementById("display-toggle");
 const removeDeadButton = document.getElementById("remove-dead-button");
-const styleSelect = document.getElementById("style-select");
-const styleSheetLink = document.getElementById("app-style-sheet");
-const toastRoot = document.getElementById("toast-root");
 const searchInput = document.getElementById("token-search");
-const backToTopButton = document.getElementById("back-to-top-button");
 const loader = document.getElementById("loader");
 const sortBySelect = document.getElementById("sort-by");
 const sortDirectionButton = document.getElementById("sort-direction");
 const filterMcapSelect = document.getElementById("filter-mcap");
-const tokenCounter = document.getElementById("token-counter");
 const filterGraduationSelect = document.getElementById("filter-graduation");
-
-if (toastRoot) {
-  toastRoot.style.position = 'fixed';
-  toastRoot.style.display = 'grid';
-  toastRoot.style.pointerEvents = 'none';
-  toastRoot.style.zIndex = '1000';
-  toastRoot.style.top = '2rem';
-  toastRoot.style.left = '50%';
-  toastRoot.style.right = 'auto';
-  toastRoot.style.bottom = 'auto';
-  toastRoot.style.transform = 'translateX(-50%)';
-  toastRoot.style.width = 'min(90vw, 420px)';
-  toastRoot.style.setProperty('justify-items', 'center');
-}
+const tokenCounter = document.getElementById("token-counter");
+const bgFilteredCountEl = document.getElementById("bg-filtered-count");
+const bgTotalCountEl = document.getElementById("bg-total-count");
+const addTokenButton = document.getElementById('add-token-button');
+const addTokenPopover = document.getElementById('add-token-popover');
+const searchTokenButton = document.getElementById('search-token-button');
+const searchTokenPopover = document.getElementById('search-token-popover');
+const backToTopButton = document.getElementById('back-to-top-button');
 
 let refreshTimerId = null;
 const previousPrices = new Map();
 let trackedMints = loadTrackedMints();
 let latestSnapshot = [];
 let searchQuery = '';
-let sortState = {
-  by: "default",
-  direction: "desc"
-};
-let filterState = {
-  mcap: "all",
-  graduation: "all"
-};
-let displayMode = 'mcap'; // 'mcap' or 'price'
 let isClipboardWatchActive = false;
 let isCleanupModeActive = false;
 let tokensToDelete = [];
-
-let feedbackTimerId = null;
-let toastTimerId = null;
-let activeToast = null;
 
 let lastClipboardText = null;
 let clipboardReadInFlight = false;
@@ -117,238 +68,6 @@ function isDocumentVisible() {
   return true;
 }
 
-function getStorage() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    return window.localStorage;
-  } catch (error) {
-    console.warn("无法访问 localStorage，将不会持久化收藏。", error);
-    return null;
-  }
-}
-
-function loadThemePreference() {
-  const storage = getStorage();
-  if (!storage) {
-    return null;
-  }
-  try {
-    const stored = storage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark") {
-      return stored;
-    }
-  } catch (error) {
-    console.warn("读取主题偏好失败，将根据系统设置显示主题。", error);
-  }
-  return null;
-}
-
-function saveThemePreference(theme) {
-  const storage = getStorage();
-  if (!storage) {
-    return;
-  }
-  try {
-    storage.setItem(THEME_STORAGE_KEY, theme);
-  } catch (error) {
-    console.warn("保存主题偏好失败。", error);
-  }
-}
-
-function applyTheme(theme) {
-  const normalized = theme === "light" ? "light" : "dark";
-  const body = document.body;
-  if (!body) {
-    return;
-  }
-  body.dataset.theme = normalized;
-  if (themeToggle) {
-    const isLight = normalized === "light";
-    themeToggle.setAttribute("aria-pressed", isLight ? "true" : "false");
-    themeToggle.textContent = isLight ? "🌙" : "☀️";
-    const label = isLight ? "切换到暗色主题" : "切换到亮色主题";
-    themeToggle.setAttribute("aria-label", label);
-    themeToggle.title = label;
-  }
-}
-
-function resolvePreferredTheme() {
-  const stored = loadThemePreference();
-  if (stored) {
-    return { theme: stored, fromStorage: true };
-  }
-  if (typeof window !== "undefined" && window.matchMedia) {
-    const prefersLight = window.matchMedia("(prefers-color-scheme: light)");
-    return { theme: prefersLight.matches ? "light" : "dark", fromStorage: false, mediaQuery: prefersLight };
-  }
-  return { theme: "dark", fromStorage: false, mediaQuery: null };
-}
-
-const preferredTheme = resolvePreferredTheme();
-let userHasThemePreference = preferredTheme.fromStorage;
-applyTheme(preferredTheme.theme);
-
-if (preferredTheme.mediaQuery) {
-  const handleThemeMediaChange = (event) => {
-    if (userHasThemePreference) {
-      return;
-    }
-    applyTheme(event.matches ? "light" : "dark");
-  };
-  if (typeof preferredTheme.mediaQuery.addEventListener === "function") {
-    preferredTheme.mediaQuery.addEventListener("change", handleThemeMediaChange);
-  } else if (typeof preferredTheme.mediaQuery.addListener === "function") {
-    preferredTheme.mediaQuery.addListener(handleThemeMediaChange);
-  }
-}
-
-if (themeToggle) {
-  themeToggle.addEventListener("click", (event) => {
-    const isDark = document.body.dataset.theme === "dark";
-    const nextTheme = isDark ? "light" : "dark";
-
-    userHasThemePreference = true;
-    applyTheme(nextTheme);
-    saveThemePreference(nextTheme);
-  });
-}
-
-function normalizeStyleId(value) {
-  if (typeof value !== "string") {
-    return null;
-  }
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-  return STYLE_OPTIONS.includes(trimmed) ? trimmed : null;
-}
-
-function loadStylePreference() {
-  const storage = getStorage();
-  if (!storage) {
-    return null;
-  }
-  try {
-    const stored = storage.getItem(STYLE_STORAGE_KEY);
-    return normalizeStyleId(stored);
-  } catch (error) {
-    console.warn("读取样式偏好失败。", error);
-  }
-  return null;
-}
-
-function saveStylePreference(style) {
-  const storage = getStorage();
-  if (!storage) {
-    return;
-  }
-  try {
-    storage.setItem(STYLE_STORAGE_KEY, style);
-  } catch (error) {
-    console.warn("保存样式偏好失败。", error);
-  }
-}
-
-function applyStyleSheet(style, options = {}) {
-  const { persist = true, updateControl = true } = options;
-  const normalized = normalizeStyleId(style) ?? DEFAULT_STYLE;
-  if (styleSheetLink) {
-    styleSheetLink.setAttribute("href", normalized);
-  } else {
-    console.warn("未找到样式链接节点，无法切换样式。");
-  }
-  const body = document.body;
-  if (body) {
-    const styleName = normalized.replace(/\.css$/i, "");
-    body.dataset.style = styleName;
-  }
-  if (updateControl && styleSelect) {
-    if (styleSelect.value !== normalized) {
-      styleSelect.value = normalized;
-    }
-  }
-  if (persist) {
-    saveStylePreference(normalized);
-  }
-  return normalized;
-}
-
-const preferredStyle = loadStylePreference() ?? DEFAULT_STYLE;
-applyStyleSheet(preferredStyle, { persist: false });
-
-if (styleSelect) {
-  styleSelect.addEventListener("change", (event) => {
-    const target = event.target;
-    const value = typeof target?.value === "string" ? target.value : DEFAULT_STYLE;
-    const nextStyle = normalizeStyleId(value) ?? DEFAULT_STYLE;
-
-    // 在切换样式前，强制关闭所有浮动层并重置状态
-    if (addTokenPopover && !addTokenPopover.hidden) {
-      addTokenPopover.classList.remove("visible");
-      addTokenPopover.hidden = true;
-      anime.remove(addTokenPopover); // 移除正在进行的动画
-    }
-    if (searchTokenPopover && !searchTokenPopover.hidden) {
-      searchTokenPopover.classList.remove("visible");
-      searchTokenPopover.hidden = true;
-      anime.remove(searchTokenPopover); // 移除正在进行的动画
-    }
-
-    applyStyleSheet(nextStyle, { updateControl: false });
-  });
-}
-
-function loadViewPreference() {
-  const storage = getStorage();
-  if (!storage) {
-    return null;
-  }
-  try {
-    const stored = storage.getItem(VIEW_STORAGE_KEY);
-    if (stored === "compact" || stored === "expanded") {
-      return stored;
-    }
-  } catch (error) {
-    console.warn("读取卡片视图偏好失败。", error);
-  }
-  return null;
-}
-
-function saveViewPreference(view) {
-  const storage = getStorage();
-  if (!storage) {
-    return;
-  }
-  try {
-    storage.setItem(VIEW_STORAGE_KEY, view);
-  } catch (error) {
-    console.warn("保存卡片视图偏好失败。", error);
-  }
-}
-
-function applyView(view) {
-  const body = document.body;
-  if (!body) {
-    return;
-  }
-  const normalized = view === "compact" ? "compact" : "expanded";
-  body.dataset.view = normalized;
-  if (viewToggle) {
-    const isCompact = normalized === "compact";
-    const useTag = viewToggle.querySelector('use');
-    viewToggle.setAttribute("aria-pressed", isCompact ? "true" : "false");
-    const label = isCompact ? "切换到完整模式" : "切换到紧凑模式";
-    viewToggle.setAttribute("aria-label", label);
-    viewToggle.title = label;
-    // 切换 SVG 图标
-    if (useTag) useTag.setAttribute('href', isCompact ? '#list-view-path' : '#grid-view-path');
-  }
-  updateSymbolDisplays(normalized);
-}
-
 function shouldUseViewTransition() {
   if (typeof document === 'undefined') {
     return false;
@@ -365,191 +84,8 @@ function shouldUseViewTransition() {
   return true;
 }
 
-function switchViewWithTransition(view) {
-  const start = typeof document !== "undefined" ? document.startViewTransition : null;
-  if (typeof start === "function" && shouldUseViewTransition()) {
-    start.call(document, () => {
-      applyView(view);
-      saveViewPreference(view);
-    });
-    return;
-  }
-  applyView(view);
-  saveViewPreference(view);
-}
-
-const preferredView = loadViewPreference() ?? "expanded";
-applyView(preferredView);
-
-if (viewToggle) {
-  viewToggle.addEventListener("click", () => {
-    const current = document.body?.dataset.view === "compact" ? "compact" : "expanded";
-    const next = current === "compact" ? "expanded" : "compact";
-    switchViewWithTransition(next);
-  });
-}
-
-function loadDisplayPreference() {
-  const storage = getStorage();
-  if (!storage) return null;
-  try {
-    const stored = storage.getItem(DISPLAY_STORAGE_KEY);
-    if (stored === "price" || stored === "mcap") {
-      return stored;
-    }
-  } catch (error) {
-    console.warn("读取显示偏好失败。", error);
-  }
-  return null;
-}
-
-function saveDisplayPreference(mode) {
-  const storage = getStorage();
-  if (!storage) return;
-  try {
-    storage.setItem(DISPLAY_STORAGE_KEY, mode);
-  } catch (error) {
-    console.warn("保存显示偏好失败。", error);
-  }
-}
-
-function applyDisplayMode(mode) {
-  displayMode = mode === 'price' ? 'price' : 'mcap';
-  if (displayToggle) {
-    const isPriceMode = displayMode === 'price';
-    const label = isPriceMode ? "切换为市值" : "切换为价格";
-    displayToggle.textContent = isPriceMode ? "市值" : "价格";
-    displayToggle.setAttribute("aria-label", label);
-    displayToggle.title = label;
-  }
-  // 重新渲染卡片以应用新的显示模式
-  updateTokenView();
-}
-
-const preferredDisplay = loadDisplayPreference() ?? 'mcap';
-applyDisplayMode(preferredDisplay);
-
-if (displayToggle) {
-  displayToggle.addEventListener('click', () => {
-    const nextMode = displayMode === 'mcap' ? 'price' : 'mcap';
-    // 使用 View Transitions API 实现平滑切换
-    if (typeof document.startViewTransition === 'function' && shouldUseViewTransition()) {
-      document.startViewTransition(() => applyDisplayMode(nextMode));
-    } else {
-      applyDisplayMode(nextMode);
-    }
-    saveDisplayPreference(nextMode);
-  });
-}
-
-function loadClipboardWatchPreference() {
-  const storage = getStorage();
-  if (!storage) return false;
-  try {
-    return storage.getItem(CLIPBOARD_WATCH_STORAGE_KEY) === 'true';
-  } catch (error) {
-    console.warn("读取剪贴板监听偏好失败。", error);
-  }
-  return false;
-}
-
-function saveClipboardWatchPreference(isActive) {
-  const storage = getStorage();
-  if (!storage) return;
-  try {
-    storage.setItem(CLIPBOARD_WATCH_STORAGE_KEY, isActive ? 'true' : 'false');
-  } catch (error) {
-    console.warn("保存剪贴板监听偏好失败。", error);
-  }
-}
-
-function applyClipboardWatchState(isActive) {
-  isClipboardWatchActive = !!isActive;
-  if (clipboardToggleButton) {
-    clipboardToggleButton.dataset.clipboardActive = isClipboardWatchActive;
-    if (isClipboardWatchActive) {
-      clipboardToggleButton.classList.add('is-active');
-      clipboardToggleButton.setAttribute('aria-label', '关闭剪贴板监听');
-    } else {
-      clipboardToggleButton.classList.remove('is-active');
-      clipboardToggleButton.setAttribute('aria-label', '开启剪贴板监听');
-    }
-  }
-}
-
-const preferredClipboardWatch = loadClipboardWatchPreference();
-applyClipboardWatchState(preferredClipboardWatch);
-
-if (clipboardToggleButton) {
-  clipboardToggleButton.addEventListener('click', async () => {
-    const nextState = !isClipboardWatchActive;
-    if (nextState) {
-      // 首次开启时，尝试请求权限
-      try {
-        if (navigator.permissions?.query) {
-          const result = await navigator.permissions.query({ name: 'clipboard-read' });
-          if (result.state === 'denied') {
-            showToast('无法访问剪贴板，请检查浏览器权限设置。', 'error');
-            return;
-          }
-        }
-        // 无论权限如何，都先尝试读取一次
-        await tryImportMintsFromClipboard(true);
-      } catch (error) {
-        console.warn('请求剪贴板权限时发生错误:', error);
-      }
-    }
-    applyClipboardWatchState(nextState);
-    saveClipboardWatchPreference(nextState);
-  });
-}
-
 function isLikelyMint(value) {
   return typeof value === "string" && SINGLE_MINT_PATTERN.test(value.trim());
-}
-
-function loadTrackedMints() {
-  const storage = getStorage();
-  if (!storage) {
-    return [...DEFAULT_MINTS];
-  }
-
-  try {
-    const raw = storage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return [...DEFAULT_MINTS];
-    }
-
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      const deduped = [];
-      for (const value of parsed) {
-        if (!isLikelyMint(value)) continue;
-        const mint = value.trim();
-        if (!deduped.includes(mint)) {
-          deduped.push(mint);
-        }
-      }
-      return deduped;
-    }
-  } catch (error) {
-    console.warn("读取本地收藏失败，使用默认列表。", error);
-  }
-
-  return [...DEFAULT_MINTS];
-}
-
-function saveTrackedMints(mints) {
-  const storage = getStorage();
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(mints));
-  } catch (error) {
-    console.warn("保存收藏列表失败。", error);
-  }
 }
 
 function extractMints(text) {
@@ -570,36 +106,7 @@ function getPriceChange(stats) {
   return null;
 }
 
-function showFeedback(message, status = "info") {
-  if (!mintFeedback) return;
-  if (feedbackTimerId) {
-    clearTimeout(feedbackTimerId);
-  }
-
-  mintFeedback.textContent = message;
-  mintFeedback.dataset.status = status;
-  mintFeedback.hidden = false;
-
-  feedbackTimerId = setTimeout(() => {
-    mintFeedback.textContent = "";
-    mintFeedback.dataset.status = "";
-    mintFeedback.hidden = true;
-    feedbackTimerId = null;
-  }, 4000);
-}
-
-function clearFeedback() {
-  if (!mintFeedback) return;
-  if (feedbackTimerId) {
-    clearTimeout(feedbackTimerId);
-    feedbackTimerId = null;
-  }
-  mintFeedback.textContent = "";
-  mintFeedback.dataset.status = "";
-  mintFeedback.hidden = true;
-}
-
-async function tryImportMintsFromClipboard(force = false) {
+export async function tryImportMintsFromClipboard(force = false) {
   if (clipboardReadInFlight) {
     return;
   }
@@ -636,44 +143,6 @@ async function tryImportMintsFromClipboard(force = false) {
   } finally {
     clipboardReadInFlight = false;
   }
-}
-
-async function fetchTokenInfos(mints) {
-  const infoMap = new Map();
-  for (const mintChunk of chunk(mints, QUERY_LIMIT_INFO)) {
-    const url = new URL(TOKEN_INFO_API);
-    url.searchParams.set("query", mintChunk.join(","));
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      throw new Error(`获取 Token 基础信息失败: ${response.status}`);
-    }
-
-    const data = await response.json();
-    for (const token of data) {
-      infoMap.set(token.id, token);
-    }
-  }
-  return infoMap;
-}
-
-async function fetchTokenPrices(mints) {
-  const priceMap = new Map();
-  for (const mintChunk of chunk(mints, QUERY_LIMIT_PRICE)) {
-    const url = new URL(TOKEN_PRICE_API);
-    url.searchParams.set("ids", mintChunk.join(","));
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      throw new Error(`获取 Token 价格失败: ${response.status}`);
-    }
-
-    const data = await response.json();
-    for (const [mint, value] of Object.entries(data)) {
-      priceMap.set(mint, value);
-    }
-  }
-  return priceMap;
 }
 
 function formatNumber(value, options = {}) {
@@ -753,10 +222,12 @@ function updateSymbolDisplays(viewMode) {
 }
 
 function applyFilters(tokens) {
+  const filterState = getFilterState();
   if (!Array.isArray(tokens)) return [];
   let filtered = tokens;
 
   // 如果处于清理模式，则忽略所有其他筛选，只显示待删除的 Token
+  // TODO: Move cleanup mode logic out of this pure function
   if (isCleanupModeActive) {
     return tokensToDelete;
   }
@@ -823,6 +294,7 @@ function applyFilters(tokens) {
 }
 
 function applySort(tokens) {
+  const sortState = getSortState();
   if (!Array.isArray(tokens)) {
     return tokens;
   }
@@ -878,12 +350,20 @@ function applySearchFilter(tokens, query) {
   });
 }
 
-function updateTokenView() {
+export function updateTokenView() {
   let processedTokens = applyFilters(latestSnapshot);
 
+  const totalUniqueCount = latestSnapshot.length > 0
+    ? new Set(latestSnapshot.map((token) => token.mint)).size
+    : 0;
+  const filteredUniqueCount = processedTokens.length > 0
+    ? new Set(processedTokens.map((token) => token.mint)).size
+    : 0;
+
+  const totalCount = totalUniqueCount;
+  const filteredCount = Math.min(filteredUniqueCount, totalCount);
+
   if (tokenCounter) {
-    const filteredCount = processedTokens.length;
-    const totalCount = latestSnapshot.length;
     if (totalCount > 0) {
       tokenCounter.textContent = `${filteredCount} / ${totalCount}`;
       tokenCounter.hidden = false;
@@ -891,81 +371,27 @@ function updateTokenView() {
       tokenCounter.hidden = true;
     }
   }
+
+  if (bgFilteredCountEl) {
+    bgFilteredCountEl.textContent = String(filteredCount);
+    bgFilteredCountEl.dataset.value = String(filteredCount);
+  }
+  if (bgTotalCountEl) {
+    bgTotalCountEl.textContent = String(totalCount);
+    bgTotalCountEl.dataset.value = String(totalCount);
+  }
+
   processedTokens = applySort(processedTokens);
 
   const filtered = processedTokens; // for clarity
   const canAnimate = filtered.length <= VIEW_TRANSITION_CARD_LIMIT && shouldUseViewTransition();
-  if (typeof document.startViewTransition === 'function' && canAnimate) {
+  if (typeof document.startViewTransition === "function" && canAnimate) {
     document.startViewTransition(() => renderTokens(filtered, { canAnimate }));
     return;
   }
   renderTokens(filtered, { canAnimate });
 }
-function showToast(message, status = "info") {
-  // 如果正在显示清理模式的提示，则不允许其他 toast 打断
-  if (activeToast && activeToast.dataset.toastType === 'cleanup-prompt') {
-    // 允许成功或失败的 toast 覆盖它
-    if (status !== 'success' && status !== 'error') {
-      return;
-    }
-  }
-
-  if (!toastRoot) return;
-
-  const staleToasts = Array.from(toastRoot.children).filter((node) => node !== activeToast && !node.classList.contains('visible'));
-  for (const node of staleToasts) {
-    node.remove();
-  }
-
-  if (toastTimerId) {
-    clearTimeout(toastTimerId);
-    toastTimerId = null;
-  }
-
-  const previous = activeToast;
-  if (previous) {
-    previous.classList.remove("visible");
-    previous.addEventListener(
-      "transitionend",
-      () => {
-        if (previous.parentElement) {
-          previous.remove();
-        }
-      },
-      { once: true }
-    );
-  }
-
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.dataset.status = status;
-  toast.textContent = message;
-  toastRoot.appendChild(toast);
-  activeToast = toast;
-
-  requestAnimationFrame(() => {
-    toast.classList.add("visible");
-  });
-
-  toastTimerId = setTimeout(() => {
-    toast.classList.remove("visible");
-    toast.addEventListener(
-      "transitionend",
-      () => {
-        if (toast.parentElement) {
-          toast.remove();
-        }
-      },
-      { once: true }
-    );
-    if (activeToast === toast) {
-      activeToast = null;
-    }
-    toastTimerId = null;
-  }, 3200);
-}
-
-async function copyMintToClipboard(mint) {
+export async function copyMintToClipboard(mint) {
   if (!mint) return;
   try {
     if (navigator.clipboard?.writeText) {
@@ -989,7 +415,7 @@ async function copyMintToClipboard(mint) {
   }
 }
 
-async function fetchAndPrependTokens(newMints) {
+export async function fetchAndPrependTokens(newMints) {
   if (!newMints || newMints.length === 0) return;
 
   // 仅为新 Token 显示加载状态
@@ -1034,7 +460,7 @@ async function fetchAndPrependTokens(newMints) {
   }
 }
 
-function addTrackedMints(newMints) {
+export function addTrackedMints(newMints) {
   if (!newMints.length) {
     showFeedback("未识别到有效 mint 地址。", "error");
     return { added: 0, duplicates: 0 };
@@ -1075,7 +501,7 @@ function addTrackedMints(newMints) {
   return { added: uniqueNew.length, duplicates: duplicates.length };
 }
 
-async function removeTrackedMint(mint) {
+export async function removeTrackedMint(mint) {
   if (!trackedMints.includes(mint)) {
     return;
   }
@@ -1131,6 +557,8 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
     tokenGrid.append(empty);
     return;
   }
+
+  const displayMode = getDisplayMode();
 
   for (const token of tokens) {
     const { info, price } = token;
@@ -1292,7 +720,7 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
   }
 }
 
-async function refresh() {
+export async function refresh() {
   const mints = trackedMints.slice();
   if (!mints.length) {
     latestSnapshot = [];
@@ -1352,7 +780,7 @@ async function refresh() {
   }
 }
 
-function scheduleRefresh() {
+export function scheduleRefresh() {
   if (refreshTimerId) {
     clearInterval(refreshTimerId);
   }
@@ -1395,15 +823,16 @@ if (searchInput) {
 
 if (sortBySelect) {
   sortBySelect.addEventListener("change", (e) => {
-    sortState.by = e.target.value;
+    setSortState({ by: e.target.value });
     updateTokenView();
   });
 }
 
 if (sortDirectionButton) {
   sortDirectionButton.addEventListener("click", () => {
-    const newDirection = sortState.direction === "asc" ? "desc" : "asc";
-    sortState.direction = newDirection;
+    const currentSort = getSortState();
+    const newDirection = currentSort.direction === "asc" ? "desc" : "asc";
+    setSortState({ direction: newDirection });
     sortDirectionButton.dataset.direction = newDirection;
     const newLabel = newDirection === "asc" ? "切换为降序" : "切换为升序";
     sortDirectionButton.setAttribute("aria-label", newLabel);
@@ -1414,19 +843,19 @@ if (sortDirectionButton) {
 
 if (filterMcapSelect) {
   filterMcapSelect.addEventListener("change", (e) => {
-    filterState.mcap = e.target.value;
+    setFilterState({ mcap: e.target.value });
     updateTokenView();
   });
 }
 
 if (filterGraduationSelect) {
   filterGraduationSelect.addEventListener("change", (e) => {
-    filterState.graduation = e.target.value;
+    setFilterState({ graduation: e.target.value });
     updateTokenView();
   });
 }
 
-function cancelCleanupMode() {
+export function cancelCleanupMode() {
   if (!isCleanupModeActive) return;
   isCleanupModeActive = false;
   tokensToDelete = [];
@@ -1533,7 +962,7 @@ function updateCleanupButtonState(isActive) {
     removeDeadButton.title = '清理不活跃的 Token';
     if (useTag) useTag.setAttribute('href', '#trash-path');
     // 如果当前是清理提示，则关闭它
-    if (activeToast && activeToast.dataset.toastType === 'cleanup-prompt') {
+    if (isCleanupToastActive()) {
       closeActiveToast();
     }
   }

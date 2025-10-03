@@ -83,14 +83,61 @@ body {
   padding: 0 1rem 3rem;
 }
 
+.background-counter {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: auto;
+  transform-origin: top right;
+  transform: translateY(38%) rotate(10deg);
+  font-size: clamp(5rem, 11vw, 9rem);
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.05);
+  z-index: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.1em;
+}
+
+.digit-container {
+  display: flex;
+}
+
+.digit-slot {
+  height: 1em;
+  overflow: hidden;
+}
+
+.digit-reel {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.digit-reel.slide-up {
+  transform: translateY(-50%);
+}
+
+.digit-reel.slide-down {
+  transform: translateY(0);
+}
+
+body[data-theme="light"] .background-counter {
+  color: rgba(0, 0, 0, 0.04);
+}
+
 .app-header {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1.5rem;
   padding-top: 2.5rem;
   text-align: center;
+  z-index: 2;
 }
 
 .app-header h1 {
@@ -118,12 +165,85 @@ body {
 
 .header-actions {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.header-actions-left,
+.header-actions-right {
+  display: inline-flex;
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.header-actions-left {
+  justify-content: flex-start;
+  flex: 1 1 auto;
+}
+
+.header-actions-right {
   justify-content: flex-end;
-  /* 确保动作按钮组作为一个整体 */
-  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.header-actions-right .refresh-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.segmented-control {
+   position: relative;
+  display: inline-flex;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 2px 8px var(--glass-shadow);
+    padding: 4px;
+
+}
+
+.segmented-control .segment {
+    position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  padding: 0 1rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 200ms ease;
+  height: 2rem;
+}
+
+.segmented-control .segment + .segment {
+  border-left: 1px solid var(--glass-border);
+}
+
+.segmented-control .segment.is-active {
+  color: var(--fg);
+}
+
+.segmented-control .segment-glider {
+  position: absolute;
+  top: 4px;
+  height: calc(100% - 8px);
+  width: calc(50% - 4px);
+  background: var(--surface-2);
+  border-radius: 10px;
+  box-shadow: 0 0 12px var(--accent-weak);
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#view-toggle[data-active-view="expanded"] .segment-glider,
+#display-toggle[data-active-mode="price"] .segment-glider {
+  transform: translateX(100%);
 }
 
 /* --- Glassmorphism Button/Action Style --- */
@@ -134,7 +254,7 @@ body {
   min-width: 2.6rem;
   height: 2.4rem;
   padding: 0 0.85rem;
-  border-radius: 999px;
+  border-radius: 12px;
   /* Light, semi-transparent border */
   border: 1px solid var(--glass-border); 
   background: var(--surface-1);
@@ -189,7 +309,7 @@ body {
 
 .header-action:active {
   /* Push effect */
-  transform: scale(0.98); 
+  opacity: 0.85; 
   box-shadow: 0 2px 5px var(--glass-shadow);
 }
 
@@ -199,8 +319,8 @@ body {
 }
 
 .view-toggle {
-  min-width: 2.4rem;
-  padding: 0;
+  min-width: 6rem;
+  padding: 0 0.9rem;
 }
 
 .refresh-inline {
@@ -214,7 +334,7 @@ body {
   color: var(--muted);
   background: var(--surface-1);
   padding: 0.2rem 0.5rem;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   white-space: nowrap;
   backdrop-filter: blur(var(--glass-blur));
@@ -226,7 +346,7 @@ body {
   border: 1px solid var(--glass-border);
   color: inherit;
   padding: 0.35rem 0.75rem;
-  border-radius: 999px;
+  border-radius: 12px;
   font-size: 0.85rem;
   cursor: pointer;
   backdrop-filter: blur(var(--glass-blur));
@@ -240,6 +360,13 @@ body {
 
 .refresh-action {
   min-width: 2.8rem;
+}
+
+.refresh-icon {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+  fill: currentColor;
 }
 
 .control-select option,
@@ -260,7 +387,8 @@ body {
   z-index: 500;
   display: flex;
   width: 100%;
-  margin-top: -74px; /* 抵消占位符高度，使其回到原位 */
+  margin-top: -74px; /* offset placeholder height */
+  margin-bottom: 1.5rem;
 }
 .sticky-sentinel {
   position: absolute;
@@ -291,7 +419,7 @@ body {
 .sticky-wrapper.is-stuck .filter-sort-controls {
   /* 灵动岛效果：缩小宽度、加大圆角 */
   width: min(880px, 90%);
-  border-radius: 999px;
+  border-radius: 12px;
   box-shadow: 0 8px 32px var(--glass-shadow);
   padding-left: 1rem;
   padding-right: 1rem;
@@ -363,7 +491,7 @@ body {
 .add-token-trigger {
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 50%;
+  border-radius: 12px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -428,7 +556,7 @@ body {
 .search-token-trigger {
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 50%;
+  border-radius: 12px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -460,7 +588,7 @@ body {
 .clipboard-trigger {
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 50%;
+  border-radius: 12px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -485,7 +613,7 @@ body {
 .remove-dead-trigger {
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 50%;
+  border-radius: 12px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -525,7 +653,7 @@ body {
 #token-search {
   width: 100%;
   padding: 0.6rem 1rem;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: var(--surface-1);
   color: inherit;
@@ -553,7 +681,7 @@ body {
   color: inherit;
   border: 1px solid var(--glass-border);
   padding: 0.5rem 0.9rem;
-  border-radius: 999px;
+  border-radius: 12px;
   font-size: 0.95rem;
   transition: all 160ms ease;
   backdrop-filter: blur(var(--glass-blur));
@@ -577,7 +705,7 @@ body {
   color: inherit;
   border: 1px solid var(--glass-border);
   padding: 0.45rem 0.9rem;
-  border-radius: 999px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 0.9rem;
   min-height: 2.2rem;
@@ -596,7 +724,7 @@ body {
 }
 
 .controls button:active {
-  transform: scale(0.98);
+  opacity: 0.85;
   box-shadow: 0 2px 5px var(--glass-shadow);
 }
 
@@ -737,7 +865,7 @@ body[data-view="compact"] .token-image {
   position: static;
   transform: none;
   padding: 0.08rem;
-  border-radius: 50%;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: var(--surface-2);
   box-shadow: none;
@@ -851,7 +979,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
 .token-icon {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 12px;
   border: none;
   background: var(--surface-2);
   object-fit: cover;
@@ -900,7 +1028,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   justify-content: center;
   width: 1.8rem;
   height: 1.8rem;
-  border-radius: 50%;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: var(--surface-1);
   color: inherit;
@@ -927,7 +1055,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
 }
 
 .copy-mint:active {
-  transform: scale(0.95);
+  opacity: 0.85;
   box-shadow: 0 1px 3px var(--glass-shadow);
 }
 
@@ -935,10 +1063,11 @@ body[data-view="compact"] .token-card:hover .token-remove {
 .token-remove {
   background: var(--surface-1);
   border: 1px solid var(--glass-border);
-  border-radius: 999px;
+  border-radius: 12px;
   color: var(--muted);
   width: 1.75rem;
   height: 1.75rem;
+  aspect-ratio: 1 / 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -955,7 +1084,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
 }
 
 .token-remove:active {
-  transform: scale(0.95);
+  opacity: 0.85;
   box-shadow: 0 1px 3px var(--glass-shadow);
 }
 
@@ -1005,7 +1134,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   align-items: center;
   gap: 0.25rem;
   padding: 0.1rem 0.3rem;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   /* Note: Removed blur for small tags to maintain readability */
   background: var(--surface-2); 
@@ -1031,7 +1160,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   align-items: center;
   justify-content: center;
   padding: 0.35rem 0.7rem;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: var(--surface-1);
   color: inherit;
@@ -1126,17 +1255,29 @@ body[data-view="compact"] .token-card:hover .token-remove {
     width: 100%;
   }
 
-.header-right {
-    justify-content: stretch;
+  .header-actions-left,
+  .header-actions-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .segmented-control {
+    width: 100%;
+  }
+
+  .header-actions-right .refresh-inline {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
   }
 
-.refresh-inline {
-    justify-content: stretch;
+  .refresh-inline-select {
+    width: 100%;
   }
 
-.refresh-action {
-    min-width: 2.8rem;
+  .refresh-action {
+    width: 100%;
   }
 
   .header-action {
@@ -1148,25 +1289,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
   .header-action.theme-toggle {
     width: 2.2rem;
   }
-
-  .controls {
-    gap: 1rem;
-  }
-
-  .mint-input-row {
-    display: flex;
-    align-items: stretch;
-  }
-
-  .controls select,
-  .controls button {
-    width: 100%;
-  }
-
-  .token-card {
-    padding: 0.85rem;
-  }
 }
+
 
 /* --- Glassmorphism Toast Style --- */
 .toast-root {
@@ -1227,17 +1351,17 @@ body[data-view="compact"] .token-card:hover .token-remove {
     margin: 0 auto;
   }
 
-  .header-left {
+  .header-actions-left,
+  .header-actions-right {
+    width: 100%;
     justify-content: center;
   }
 
-  .header-right {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
+  .segmented-control {
+    width: 100%;
   }
 
-  .refresh-inline {
+  .header-actions-right .refresh-inline {
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
@@ -1251,28 +1375,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
   .refresh-action {
     width: 100%;
   }
-
-  .header-action {
-    min-width: auto;
-  }
-
-  .controls {
-    gap: 1rem;
-  }
-
-  .mint-input-row {
-    align-items: stretch;
-  }
-
-  .controls select,
-  .controls button {
-    width: 100%;
-  }
-
-  .token-card {
-    padding: 0.85rem;
-  }
 }
+
 
 .back-to-top {
   position: fixed;
@@ -1280,7 +1384,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   right: 2rem;
   width: 3rem;
   height: 3rem;
-  border-radius: 50%;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: var(--surface-1);
   color: var(--fg);
@@ -1333,7 +1437,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   height: 50px;
   border: 5px solid var(--surface-border);
   border-top-color: var(--accent);
-  border-radius: 50%;
+  border-radius: 12px;
   animation: spin 1s linear infinite;
 }
 
