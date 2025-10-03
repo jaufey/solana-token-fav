@@ -9,6 +9,7 @@ const STORAGE_KEY = "solana-token-favs:mints";
 const THEME_STORAGE_KEY = "solana-token-favs:theme";
 const VIEW_STORAGE_KEY = "solana-token-favs:view";
 const DISPLAY_STORAGE_KEY = "solana-token-favs:display";
+const CLIPBOARD_WATCH_STORAGE_KEY = "solana-token-favs:clipboardWatch";
 const STYLE_STORAGE_KEY = "solana-token-favs:style";
 const STYLE_OPTIONS = [
   "styles.css",
@@ -41,6 +42,7 @@ const searchTokenButton = document.getElementById("search-token-button");
 const searchTokenPopover = document.getElementById("search-token-popover");
 const themeToggle = document.getElementById("theme-toggle");
 const viewToggle = document.getElementById("view-toggle");
+const clipboardToggleButton = document.getElementById("clipboard-toggle-button");
 const displayToggle = document.getElementById("display-toggle");
 const removeDeadButton = document.getElementById("remove-dead-button");
 const styleSelect = document.getElementById("style-select");
@@ -83,6 +85,7 @@ let filterState = {
   graduation: "all"
 };
 let displayMode = 'mcap'; // 'mcap' or 'price'
+let isClipboardWatchActive = false;
 let isCleanupModeActive = false;
 let tokensToDelete = [];
 
@@ -335,11 +338,13 @@ function applyView(view) {
   body.dataset.view = normalized;
   if (viewToggle) {
     const isCompact = normalized === "compact";
+    const useTag = viewToggle.querySelector('use');
     viewToggle.setAttribute("aria-pressed", isCompact ? "true" : "false");
     const label = isCompact ? "切换到完整模式" : "切换到紧凑模式";
-    viewToggle.textContent = isCompact ? "完整" : "紧凑";
     viewToggle.setAttribute("aria-label", label);
     viewToggle.title = label;
+    // 切换 SVG 图标
+    if (useTag) useTag.setAttribute('href', isCompact ? '#list-view-path' : '#grid-view-path');
   }
   updateSymbolDisplays(normalized);
 }
@@ -412,8 +417,8 @@ function applyDisplayMode(mode) {
   displayMode = mode === 'price' ? 'price' : 'mcap';
   if (displayToggle) {
     const isPriceMode = displayMode === 'price';
-    const label = isPriceMode ? "切换显示市值" : "切换显示价格";
-    displayToggle.textContent = isPriceMode ? "显示市值" : "显示价格";
+    const label = isPriceMode ? "切换为市值" : "切换为价格";
+    displayToggle.textContent = isPriceMode ? "市值" : "价格";
     displayToggle.setAttribute("aria-label", label);
     displayToggle.title = label;
   }
@@ -434,6 +439,68 @@ if (displayToggle) {
       applyDisplayMode(nextMode);
     }
     saveDisplayPreference(nextMode);
+  });
+}
+
+function loadClipboardWatchPreference() {
+  const storage = getStorage();
+  if (!storage) return false;
+  try {
+    return storage.getItem(CLIPBOARD_WATCH_STORAGE_KEY) === 'true';
+  } catch (error) {
+    console.warn("读取剪贴板监听偏好失败。", error);
+  }
+  return false;
+}
+
+function saveClipboardWatchPreference(isActive) {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(CLIPBOARD_WATCH_STORAGE_KEY, isActive ? 'true' : 'false');
+  } catch (error) {
+    console.warn("保存剪贴板监听偏好失败。", error);
+  }
+}
+
+function applyClipboardWatchState(isActive) {
+  isClipboardWatchActive = !!isActive;
+  if (clipboardToggleButton) {
+    clipboardToggleButton.dataset.clipboardActive = isClipboardWatchActive;
+    if (isClipboardWatchActive) {
+      clipboardToggleButton.classList.add('is-active');
+      clipboardToggleButton.setAttribute('aria-label', '关闭剪贴板监听');
+    } else {
+      clipboardToggleButton.classList.remove('is-active');
+      clipboardToggleButton.setAttribute('aria-label', '开启剪贴板监听');
+    }
+  }
+}
+
+const preferredClipboardWatch = loadClipboardWatchPreference();
+applyClipboardWatchState(preferredClipboardWatch);
+
+if (clipboardToggleButton) {
+  clipboardToggleButton.addEventListener('click', async () => {
+    const nextState = !isClipboardWatchActive;
+    if (nextState) {
+      // 首次开启时，尝试请求权限
+      try {
+        if (navigator.permissions?.query) {
+          const result = await navigator.permissions.query({ name: 'clipboard-read' });
+          if (result.state === 'denied') {
+            showToast('无法访问剪贴板，请检查浏览器权限设置。', 'error');
+            return;
+          }
+        }
+        // 无论权限如何，都先尝试读取一次
+        await tryImportMintsFromClipboard(true);
+      } catch (error) {
+        console.warn('请求剪贴板权限时发生错误:', error);
+      }
+    }
+    applyClipboardWatchState(nextState);
+    saveClipboardWatchPreference(nextState);
   });
 }
 
@@ -532,7 +599,7 @@ function clearFeedback() {
   mintFeedback.hidden = true;
 }
 
-async function tryImportMintsFromClipboard() {
+async function tryImportMintsFromClipboard(force = false) {
   if (clipboardReadInFlight) {
     return;
   }
@@ -552,7 +619,7 @@ async function tryImportMintsFromClipboard() {
       lastClipboardText = null;
       return;
     }
-    if (text === lastClipboardText) {
+    if (text === lastClipboardText && !force) {
       return;
     }
 
@@ -922,6 +989,51 @@ async function copyMintToClipboard(mint) {
   }
 }
 
+async function fetchAndPrependTokens(newMints) {
+  if (!newMints || newMints.length === 0) return;
+
+  // 仅为新 Token 显示加载状态
+  lastUpdated.textContent = `正在获取 ${newMints.length} 个新 Token...`;
+  if (loader) loader.hidden = false;
+  tokenGrid.classList.add("loading");
+
+  try {
+    const [infoMap, priceMap] = await Promise.all([
+      fetchTokenInfos(newMints),
+      fetchTokenPrices(newMints)
+    ]);
+
+    const newTokensData = newMints.map((mint) => {
+      const info = infoMap.get(mint) ?? null;
+      const price = priceMap.get(mint) ?? null;
+      if (info?.graduatedAt && typeof info.graduatedAt === 'string') {
+        const timestamp = new Date(info.graduatedAt).getTime();
+        if (!isNaN(timestamp)) {
+          info.graduatedAt = timestamp;
+        }
+      }
+      return { mint, info, price };
+    });
+
+    // 将新获取的 Token 数据添加到现有快照的开头
+    latestSnapshot = [...newTokensData, ...latestSnapshot];
+    updateTokenView(); // 更新视图
+
+  } catch (error) {
+    console.error("获取新 Token 数据失败", error);
+    showToast(`获取新 Token 数据失败: ${error.message}`, 'error');
+    // 即使失败，也恢复到之前的状态
+    refresh();
+  } finally {
+    // 确保加载状态被移除
+    if (loader) loader.hidden = true;
+    tokenGrid.classList.remove("loading");
+    // 更新时间戳
+    const now = new Date();
+    lastUpdated.textContent = `最后更新：${now.toLocaleString("zh-CN", { hour12: false })}`;
+  }
+}
+
 function addTrackedMints(newMints) {
   if (!newMints.length) {
     showFeedback("未识别到有效 mint 地址。", "error");
@@ -957,7 +1069,8 @@ function addTrackedMints(newMints) {
     : addedText;
   showFeedback(message, "success");
 
-  refresh();
+  // 不再全局刷新，而是只获取新添加的 Token 数据
+  void fetchAndPrependTokens(uniqueNew);
 
   return { added: uniqueNew.length, duplicates: duplicates.length };
 }
@@ -1354,10 +1467,9 @@ const shouldAutoFocusSearch = (event) => {
 };
 
 const handlePageActivation = () => {
-  if (!isDocumentVisible()) {
-    return;
+  if (isDocumentVisible() && isClipboardWatchActive && !isCleanupModeActive) {
+    void tryImportMintsFromClipboard();
   }
-  void tryImportMintsFromClipboard();
 };
 
 window.addEventListener('focus', handlePageActivation, false);
@@ -1367,7 +1479,7 @@ if (typeof document !== 'undefined' && document.addEventListener) {
   document.addEventListener('visibilitychange', handlePageActivation, false);
 }
 
-if (isDocumentVisible()) {
+if (isDocumentVisible() && isClipboardWatchActive) {
   void tryImportMintsFromClipboard();
 }
 

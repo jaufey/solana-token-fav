@@ -14,6 +14,7 @@
             <div class="header-toolbar">
         <div class="header-actions">
           <div class="refresh-inline">
+            <div id="token-counter" class="token-counter" aria-live="polite"></div>
             <p class="last-updated" id="last-updated">数据加载中…</p>
             <select id="refresh-select" class="refresh-inline-select" aria-label="刷新间隔">
               <option value="180000">3 分钟</option>
@@ -22,8 +23,14 @@
             </select>
             <button id="refresh-button" type="button" class="header-action refresh-action">立即刷新</button>
           </div>
-          <button type="button" id="view-toggle" class="header-action view-toggle" aria-pressed="false" aria-label="切换到紧凑模式">
-            紧凑
+          <button type="button" id="view-toggle" class="header-action view-toggle" aria-pressed="false" aria-label="切换到紧凑模式" title="切换视图模式">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <defs>
+                <path id="grid-view-path" d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 13h8v8h-8v-8z" />
+                <path id="list-view-path" d="M3 4h18v4H3V4zm0 7h18v4H3v-4zm0 7h18v4H3v-4z" />
+              </defs>
+              <use href="#grid-view-path" />
+            </svg>
           </button>
           <button type="button" id="display-toggle" class="header-action display-toggle" aria-label="切换显示市值或价格">
             显示价格
@@ -71,6 +78,11 @@
               <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
             </form>
           </div>
+        </div>
+        <div class="control-group">
+          <button type="button" id="clipboard-toggle-button" class="control-button clipboard-trigger" aria-label="开启剪贴板监听" title="开启/关闭剪贴板监听" data-clipboard-active="false">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M15 4H5V20H19V8H15V4ZM3 2.9918C3 2.44405 3.44405 2 3.9918 2H16L21 7V20.9918C21 21.5496 20.5559 22 20.0082 22H3.9918C3.44405 22 3 21.5559 3 20.9918V2.9918ZM7 8V10H17V8H7ZM7 12V14H17V12H7ZM7 16V18H13V16H7Z"></path></svg>
+          </button>
         </div>
         <div class="control-group">
           <button type="button" id="remove-dead-button" class="control-button remove-dead-trigger" aria-label="清理不活跃的 Token" title="清理不活跃的 Token" data-cleanup-active="false">
@@ -123,9 +135,6 @@
             <option value="graduated_over_30d">1月前毕业</option>
           </select>
         </div>
-          <div class="control-set">
-            <div id="token-counter" class="token-counter" aria-live="polite"></div>
-          </div>
       </div>
     </div>
     <main>
