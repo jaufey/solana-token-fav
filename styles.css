@@ -215,13 +215,19 @@ body[data-theme="light"] .header-action:hover {
   min-width: 2.8rem;
 }
 
+.sticky-container {
+  position: relative;
+  width: min(var(--layout-max-width), 100%);
+  margin: 1.5rem auto 0;
+}
+
 .filter-sort-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
-  width: min(var(--layout-max-width), 100%);
-  margin: 1.5rem auto 0; /* 增加与 header 的间距 */
+  width: 100%;
+  margin: 0;
   flex-wrap: wrap;
   padding: 0.75rem;
   border: 1px solid var(--surface-border);
@@ -236,7 +242,7 @@ body[data-theme="light"] .header-action:hover {
 }
 
 .sticky-sentinel {
-  position: relative;
+  position: absolute;
   height: 1px;
   top: 0;
   width: 100%;

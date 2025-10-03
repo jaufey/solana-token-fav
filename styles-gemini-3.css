@@ -316,7 +316,7 @@ body[data-theme="light"] .header-action:hover {
 }
 
 .sticky-sentinel {
-  position: relative;
+  position: absolute;
   height: 1px;
   top: 0;
   width: 100%;
