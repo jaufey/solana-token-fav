@@ -1811,22 +1811,22 @@ document.addEventListener("click", (event) => {
 });
 
 // 吸顶工具栏状态检测
-const stickyControls = document.querySelector('.filter-sort-controls');
-const stickySentinel = document.querySelector('.sticky-sentinel');
+const stickyWrapper = document.querySelector('.sticky-wrapper');
+const sentinel = document.querySelector('.sticky-sentinel'); // This now refers to the new, independent sentinel
 
-if (stickyControls && stickySentinel && typeof IntersectionObserver !== 'undefined') {
+if (sentinel && stickyWrapper && typeof IntersectionObserver !== 'undefined') {
   const observer = new IntersectionObserver(
     ([entry]) => {
-      // 当哨兵元素不再可见时，说明工具栏已经吸顶
-      stickyControls.classList.toggle('is-stuck', !entry.isIntersecting);
+      // 当哨兵元素不再与我们定义的（带有 rootMargin 的）视口区域相交时，激活吸顶状态
+      stickyWrapper.classList.toggle('is-stuck', !entry.isIntersecting);
     },
     {
       root: null, // 相对于视口
       threshold: 0,
       // 当哨兵元素的底部边缘与视口顶部对齐时触发
-      rootMargin: `-17px 0px 0px 0px`
+      rootMargin: `-16px 0px 0px 0px`
     }
   );
 
-  observer.observe(stickySentinel);
+  observer.observe(sentinel);
 }

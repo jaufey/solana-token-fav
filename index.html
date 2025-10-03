@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -47,93 +47,97 @@
         </div>
       </div>
     </header>
-    <div class="sticky-sentinel"></div>
-    <div class="filter-sort-controls">
-      <div class="controls-left">
-        <div class="control-group search-group-wrapper">
-          <button type="button" id="search-token-button" class="control-button search-token-trigger" aria-label="搜索 Token" title="搜索 Token" data-state="search">
-            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <defs>
-                <path id="search-path" d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.02944 20 2 15.9706 2 11C2 6.02944 6.02944 2 11 2C15.9706 2 20 6.02944 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.13401 14.866 4 11 4C7.13401 4 4 7.13401 4 11C4 14.866 7.13401 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748Z" />
-                <path id="close-path" d="M12 10.5858L16.9497 5.63604L18.3639 7.05025L13.4142 12L18.3639 16.9497L16.9497 18.3639L12 13.4142L7.05025 18.3639L5.63604 16.9497L10.5858 12L5.63604 7.05025L7.05025 5.63604L12 10.5858Z" />
-              </defs>
-              <use href="#search-path" />
-            </svg>
-          </button>
-          <div id="search-token-popover" class="search-token-popover" hidden>
-            <input id="token-search" type="search" autocomplete="off" placeholder="搜索 mint 或 symbol" aria-label="搜索 mint 或 symbol" />
+    <div class="controls-placeholder">
+      <div class="sticky-sentinel"></div>
+    </div>
+    <div class="sticky-wrapper">
+      <div class="filter-sort-controls">
+        <div class="controls-left">
+          <div class="control-group search-group-wrapper">
+            <button type="button" id="search-token-button" class="control-button search-token-trigger" aria-label="搜索 Token" title="搜索 Token" data-state="search">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <defs>
+                  <path id="search-path" d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.02944 20 2 15.9706 2 11C2 6.02944 6.02944 2 11 2C15.9706 2 20 6.02944 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.13401 14.866 4 11 4C7.13401 4 4 7.13401 4 11C4 14.866 7.13401 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748Z" />
+                  <path id="close-path" d="M12 10.5858L16.9497 5.63604L18.3639 7.05025L13.4142 12L18.3639 16.9497L16.9497 18.3639L12 13.4142L7.05025 18.3639L5.63604 16.9497L10.5858 12L5.63604 7.05025L7.05025 5.63604L12 10.5858Z" />
+                </defs>
+                <use href="#search-path" />
+              </svg>
+            </button>
+            <div id="search-token-popover" class="search-token-popover" hidden>
+              <input id="token-search" type="search" autocomplete="off" placeholder="搜索 mint 或 symbol" aria-label="搜索 mint 或 symbol" />
+            </div>
+          </div>
+          <div class="control-group add-group-wrapper">
+            <button type="button" id="add-token-button" class="control-button add-token-trigger" aria-label="添加 Token" title="添加 Token">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"></path></svg>
+            </button>
+            <div id="add-token-popover" class="add-token-popover" hidden>
+              <form class="mint-form" id="mint-form">
+                <div class="mint-input-row">
+                  <input id="mint-input" name="mint" type="text" autocomplete="off" placeholder="输入 mint 地址添加" required />
+                  <button type="submit">添加</button>
+                </div>
+                <p class="form-hint">支持粘贴多行或带有 mint 字段的 JSON。</p>
+                <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
+              </form>
+            </div>
+          </div>
+          <div class="control-group">
+            <button type="button" id="clipboard-toggle-button" class="control-button clipboard-trigger" aria-label="开启剪贴板监听" title="开启/关闭剪贴板监听" data-clipboard-active="false">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M15 4H5V20H19V8H15V4ZM3 2.9918C3 2.44405 3.44405 2 3.9918 2H16L21 7V20.9918C21 21.5496 20.5559 22 20.0082 22H3.9918C3.44405 22 3 21.5559 3 20.9918V2.9918ZM7 8V10H17V8H7ZM7 12V14H17V12H7ZM7 16V18H13V16H7Z"></path></svg>
+            </button>
+          </div>
+          <div class="control-group">
+            <button type="button" id="remove-dead-button" class="control-button remove-dead-trigger" aria-label="清理不活跃的 Token" title="清理不活跃的 Token" data-cleanup-active="false">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <defs>
+                  <path id="trash-path" d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z" />
+                  <path id="confirm-path" d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" />
+                </defs>
+                <use href="#trash-path" />
+              </svg>
+            </button>
           </div>
         </div>
-        <div class="control-group add-group-wrapper">
-          <button type="button" id="add-token-button" class="control-button add-token-trigger" aria-label="添加 Token" title="添加 Token">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"></path></svg>
-          </button>
-          <div id="add-token-popover" class="add-token-popover" hidden>
-            <form class="mint-form" id="mint-form">
-              <div class="mint-input-row">
-                <input id="mint-input" name="mint" type="text" autocomplete="off" placeholder="输入 mint 地址添加" required />
-                <button type="submit">添加</button>
-              </div>
-              <p class="form-hint">支持粘贴多行或带有 mint 字段的 JSON。</p>
-              <p class="form-feedback" id="mint-feedback" aria-live="polite" hidden></p>
-            </form>
+        <div class="controls-right">
+          <div class="control-set">
+            <label for="sort-by" class="control-label">排序</label>
+            <select id="sort-by" class="control-select">
+              <option value="default">添加时间</option>
+              <option value="mcap">市值</option>
+              <option value="graduatedAt">毕业时间</option>
+              <option value="1h">1H 变化</option>
+              <option value="6h">6H 变化</option>
+              <option value="24h">24H 变化</option>
+            </select>
+            <button type="button" id="sort-direction" class="control-button" aria-label="切换为升序" data-direction="desc" title="切换为升序">
+              <svg class="sort-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                <path d="M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z" />
+              </svg>
+            </button>
           </div>
-        </div>
-        <div class="control-group">
-          <button type="button" id="clipboard-toggle-button" class="control-button clipboard-trigger" aria-label="开启剪贴板监听" title="开启/关闭剪贴板监听" data-clipboard-active="false">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M15 4H5V20H19V8H15V4ZM3 2.9918C3 2.44405 3.44405 2 3.9918 2H16L21 7V20.9918C21 21.5496 20.5559 22 20.0082 22H3.9918C3.44405 22 3 21.5559 3 20.9918V2.9918ZM7 8V10H17V8H7ZM7 12V14H17V12H7ZM7 16V18H13V16H7Z"></path></svg>
-          </button>
-        </div>
-        <div class="control-group">
-          <button type="button" id="remove-dead-button" class="control-button remove-dead-trigger" aria-label="清理不活跃的 Token" title="清理不活跃的 Token" data-cleanup-active="false">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <defs>
-                <path id="trash-path" d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z" />
-                <path id="confirm-path" d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" />
-              </defs>
-              <use href="#trash-path" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="controls-right">
-        <div class="control-set">
-          <label for="sort-by" class="control-label">排序</label>
-          <select id="sort-by" class="control-select">
-            <option value="default">添加时间</option>
-            <option value="mcap">市值</option>
-            <option value="graduatedAt">毕业时间</option>
-            <option value="1h">1H 变化</option>
-            <option value="6h">6H 变化</option>
-            <option value="24h">24H 变化</option>
-          </select>
-          <button type="button" id="sort-direction" class="control-button" aria-label="切换为升序" data-direction="desc" title="切换为升序">
-            <svg class="sort-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-              <path d="M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z" />
-            </svg>
-          </button>
-        </div>
-        <div class="control-set">
-          <label for="filter-mcap" class="control-label">市值范围</label>
-          <select id="filter-mcap" class="control-select">
-            <option value="all">全部</option>
-            <option value="under_1m">&lt; $1M</option>
-            <option value="1m_10m">$1M - $10M</option>
-            <option value="10m_100m">$10M - $100M</option>
-            <option value="over_100m">&gt; $100M</option>
-          </select>
-        </div>
-        <div class="control-set">
-          <label for="filter-graduation" class="control-label">毕业状态</label>
-          <select id="filter-graduation" class="control-select">
-            <option value="all">全部</option>
-            <option value="not-graduated">未毕业</option>
-            <option value="graduated_1d">1天内毕业</option>
-            <option value="graduated_3d">3天内毕业</option>
-            <option value="graduated_7d">1周内毕业</option>
-            <option value="graduated_30d">1月内毕业</option>
-            <option value="graduated_over_30d">1月前毕业</option>
-          </select>
+          <div class="control-set">
+            <label for="filter-mcap" class="control-label">市值范围</label>
+            <select id="filter-mcap" class="control-select">
+              <option value="all">全部</option>
+              <option value="under_1m">&lt; $1M</option>
+              <option value="1m_10m">$1M - $10M</option>
+              <option value="10m_100m">$10M - $100M</option>
+              <option value="over_100m">&gt; $100M</option>
+            </select>
+          </div>
+          <div class="control-set">
+            <label for="filter-graduation" class="control-label">毕业状态</label>
+            <select id="filter-graduation" class="control-select">
+              <option value="all">全部</option>
+              <option value="not-graduated">未毕业</option>
+              <option value="graduated_1d">1天内毕业</option>
+              <option value="graduated_3d">3天内毕业</option>
+              <option value="graduated_7d">1周内毕业</option>
+              <option value="graduated_30d">1月内毕业</option>
+              <option value="graduated_over_30d">1月前毕业</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
