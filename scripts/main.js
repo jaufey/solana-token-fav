@@ -8,6 +8,7 @@ const DEFAULT_MINTS = [
 const STORAGE_KEY = "solana-token-favs:mints";
 const THEME_STORAGE_KEY = "solana-token-favs:theme";
 const VIEW_STORAGE_KEY = "solana-token-favs:view";
+const DISPLAY_STORAGE_KEY = "solana-token-favs:display";
 const STYLE_STORAGE_KEY = "solana-token-favs:style";
 const STYLE_OPTIONS = [
   "styles.css",
@@ -40,6 +41,8 @@ const searchTokenButton = document.getElementById("search-token-button");
 const searchTokenPopover = document.getElementById("search-token-popover");
 const themeToggle = document.getElementById("theme-toggle");
 const viewToggle = document.getElementById("view-toggle");
+const displayToggle = document.getElementById("display-toggle");
+const removeDeadButton = document.getElementById("remove-dead-button");
 const styleSelect = document.getElementById("style-select");
 const styleSheetLink = document.getElementById("app-style-sheet");
 const toastRoot = document.getElementById("toast-root");
@@ -49,6 +52,7 @@ const loader = document.getElementById("loader");
 const sortBySelect = document.getElementById("sort-by");
 const sortDirectionButton = document.getElementById("sort-direction");
 const filterMcapSelect = document.getElementById("filter-mcap");
+const tokenCounter = document.getElementById("token-counter");
 const filterGraduationSelect = document.getElementById("filter-graduation");
 
 if (toastRoot) {
@@ -78,6 +82,9 @@ let filterState = {
   mcap: "all",
   graduation: "all"
 };
+let displayMode = 'mcap'; // 'mcap' or 'price'
+let isCleanupModeActive = false;
+let tokensToDelete = [];
 
 let feedbackTimerId = null;
 let toastTimerId = null;
@@ -377,6 +384,59 @@ if (viewToggle) {
   });
 }
 
+function loadDisplayPreference() {
+  const storage = getStorage();
+  if (!storage) return null;
+  try {
+    const stored = storage.getItem(DISPLAY_STORAGE_KEY);
+    if (stored === "price" || stored === "mcap") {
+      return stored;
+    }
+  } catch (error) {
+    console.warn("读取显示偏好失败。", error);
+  }
+  return null;
+}
+
+function saveDisplayPreference(mode) {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(DISPLAY_STORAGE_KEY, mode);
+  } catch (error) {
+    console.warn("保存显示偏好失败。", error);
+  }
+}
+
+function applyDisplayMode(mode) {
+  displayMode = mode === 'price' ? 'price' : 'mcap';
+  if (displayToggle) {
+    const isPriceMode = displayMode === 'price';
+    const label = isPriceMode ? "切换显示市值" : "切换显示价格";
+    displayToggle.textContent = isPriceMode ? "显示市值" : "显示价格";
+    displayToggle.setAttribute("aria-label", label);
+    displayToggle.title = label;
+  }
+  // 重新渲染卡片以应用新的显示模式
+  updateTokenView();
+}
+
+const preferredDisplay = loadDisplayPreference() ?? 'mcap';
+applyDisplayMode(preferredDisplay);
+
+if (displayToggle) {
+  displayToggle.addEventListener('click', () => {
+    const nextMode = displayMode === 'mcap' ? 'price' : 'mcap';
+    // 使用 View Transitions API 实现平滑切换
+    if (typeof document.startViewTransition === 'function' && shouldUseViewTransition()) {
+      document.startViewTransition(() => applyDisplayMode(nextMode));
+    } else {
+      applyDisplayMode(nextMode);
+    }
+    saveDisplayPreference(nextMode);
+  });
+}
+
 function isLikelyMint(value) {
   return typeof value === "string" && SINGLE_MINT_PATTERN.test(value.trim());
 }
@@ -629,6 +689,11 @@ function applyFilters(tokens) {
   if (!Array.isArray(tokens)) return [];
   let filtered = tokens;
 
+  // 如果处于清理模式，则忽略所有其他筛选，只显示待删除的 Token
+  if (isCleanupModeActive) {
+    return tokensToDelete;
+  }
+
   // 市值筛选
   if (filterState.mcap !== "all") {
     filtered = filtered.filter(token => {
@@ -691,8 +756,13 @@ function applyFilters(tokens) {
 }
 
 function applySort(tokens) {
-  if (!Array.isArray(tokens) || sortState.by === "default") {
+  if (!Array.isArray(tokens)) {
     return tokens;
+  }
+
+  if (sortState.by === "default") {
+    // 当为默认排序时，升序/降序应该反转数组
+    return sortState.direction === "asc" ? [...tokens].reverse() : tokens;
   }
 
   const dir = sortState.direction === "asc" ? 1 : -1;
@@ -743,6 +813,17 @@ function applySearchFilter(tokens, query) {
 
 function updateTokenView() {
   let processedTokens = applyFilters(latestSnapshot);
+
+  if (tokenCounter) {
+    const filteredCount = processedTokens.length;
+    const totalCount = latestSnapshot.length;
+    if (totalCount > 0) {
+      tokenCounter.textContent = `${filteredCount} / ${totalCount}`;
+      tokenCounter.hidden = false;
+    } else {
+      tokenCounter.hidden = true;
+    }
+  }
   processedTokens = applySort(processedTokens);
 
   const filtered = processedTokens; // for clarity
@@ -754,6 +835,14 @@ function updateTokenView() {
   renderTokens(filtered, { canAnimate });
 }
 function showToast(message, status = "info") {
+  // 如果正在显示清理模式的提示，则不允许其他 toast 打断
+  if (activeToast && activeToast.dataset.toastType === 'cleanup-prompt') {
+    // 允许成功或失败的 toast 覆盖它
+    if (status !== 'success' && status !== 'error') {
+      return;
+    }
+  }
+
   if (!toastRoot) return;
 
   const staleToasts = Array.from(toastRoot.children).filter((node) => node !== activeToast && !node.classList.contains('visible'));
@@ -942,9 +1031,6 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
     }
 
     node.dataset.mint = token.mint;
-    if (info?.graduatedAt) {
-      node.classList.add('is-graduated');
-    }
 
     const imageWrapper = node.querySelector(".token-image");
     if (imageWrapper) {
@@ -980,48 +1066,61 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
       copyButton.dataset.mint = token.mint;
     }
 
-    const marketCap = info?.mcap;
-    const marketField = node.querySelector(".market-cap");
     const metaContainer = node.querySelector(".token-meta");
-    if (marketField) {
-      const displayValue = marketCap != null ? formatCurrency(marketCap, { compact: true }) : "--";
-      marketField.textContent = displayValue;
-    }
-    if (metaContainer) {
-      metaContainer.hidden = marketCap == null;
+    const metaLabel = node.querySelector(".meta-label");
+    const metaValue = node.querySelector(".market-cap"); // This element will show either mcap or price
+
+    if (metaContainer && metaLabel && metaValue) {
+      if (displayMode === 'price') {
+        const priceValue = token.price?.usdPrice ?? info?.usdPrice;
+        metaLabel.textContent = '价格';
+        metaValue.textContent = priceValue != null ? formatCurrency(priceValue) : '--';
+        metaContainer.hidden = priceValue == null;
+      } else { // 'mcap'
+        const marketCap = info?.mcap;
+        metaLabel.textContent = '市值';
+        metaValue.textContent = marketCap != null ? formatCurrency(marketCap, { compact: true }) : '--';
+        metaContainer.hidden = marketCap == null;
+      }
+      // 为视图切换动画设置唯一的名称
+      const metaTransitionName = buildViewTransitionName(`token-meta-${displayMode}`, token.mint);
+      if (metaTransitionName) {
+        metaContainer.style.viewTransitionName = metaTransitionName;
+      }
     }
 
+    const statsRow = node.querySelector(".token-stats-row");
     const statsTargets = [
       { selector: ".stat-1h", label: "1H", value: info?.stats1h ?? price?.stats1h },
       { selector: ".stat-6h", label: "6H", value: info?.stats6h ?? price?.stats6h },
       { selector: ".stat-24h", label: "24H", value: info?.stats24h ?? price?.stats24h },
-      { selector: ".stat-graduated", label: "Graduated", value: info?.graduatedAt }
     ];
 
     for (const { selector, label, value } of statsTargets) {
       const nodeTarget = node.querySelector(selector);
       if (!nodeTarget) continue;
+
       let change = getPriceChange(value);
       if (change == null && selector == ".stat-24h" && typeof (price?.priceChange24h) === "number") {
         change = price.priceChange24h;
       }
 
-      if (selector === ".stat-graduated") {
-        if (value) {
-          const gradDate = new Date(value);
-          nodeTarget.textContent = `🎓 ${gradDate.toLocaleDateString('en-CA')}`;
-          nodeTarget.title = `毕业于 ${gradDate.toLocaleString()}`;
-          nodeTarget.hidden = false;
-        } else {
-          nodeTarget.hidden = true;
-        }
-      } else {
-        nodeTarget.textContent = change != null ? `${label} ${formatPercent(change)}` : `${label} --`;
-        nodeTarget.classList.remove("gain", "loss");
-        if (change != null && change !== 0) {
-          nodeTarget.classList.add(change > 0 ? "gain" : "loss");
-        }
+      nodeTarget.textContent = change != null ? `${label} ${formatPercent(change)}` : `${label} --`;
+      nodeTarget.classList.remove("gain", "loss");
+      if (change != null && change !== 0) {
+        nodeTarget.classList.add(change > 0 ? "gain" : "loss");
       }
+    }
+
+    // 仅当毕业时才创建并添加毕业标签
+    if (info?.graduatedAt && statsRow) {
+      const gradStat = document.createElement('span');
+      gradStat.className = 'stat stat-graduated';
+      const gradDate = new Date(info.graduatedAt);
+      gradStat.textContent = `🎓 ${gradDate.toLocaleDateString('en-CA')}`;
+      gradStat.title = `毕业于 ${gradDate.toLocaleString()}`;
+      // 将毕业标签追加到末尾
+      statsRow.appendChild(gradStat);
     }
 
     const links = {
@@ -1040,6 +1139,11 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
       removeButton.dataset.mint = token.mint;
     }
 
+    // 为 IntersectionObserver 设置初始不可见状态
+    if (typeof anime === "function") {
+      node.style.opacity = '0';
+    }
+
     tokenGrid.append(node);
   }
 
@@ -1047,18 +1151,31 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
 
   // 使用 anime.js 为卡片添加入场动画
   if (typeof anime === "function") {
-    anime({
-      targets: ".token-card",
-      translateY: [50, 0],
-      opacity: [0, 1],
-      delay: anime.stagger(20, { grid: [Math.ceil(tokens.length / 3), 3], from: "first" }),
-      duration: 300,
-      easing: "easeOutElastic(1, .8)",
-      // 初始时隐藏卡片，等待动画开始
-      begin: (anim) => {
-        anim.animatables.forEach(a => a.target.style.opacity = '0');
+    const cards = tokenGrid.querySelectorAll('.token-card');
+    const observer = new IntersectionObserver((entries, obs) => {
+      const targetsToAnimate = [];
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          targetsToAnimate.push(entry.target);
+          obs.unobserve(entry.target); // 触发后即停止观察
+        }
       }
+
+      if (targetsToAnimate.length > 0) {
+        anime({
+          targets: targetsToAnimate,
+          translateY: [50, 0],
+          opacity: [1], // 从 0 (在 style 中设置) 到 1
+          delay: anime.stagger(30),
+          duration: 400,
+          easing: 'easeOutExpo',
+        });
+      }
+    }, {
+      rootMargin: '0px 0px -50px 0px' // 元素进入视口底部 50px 时触发
     });
+
+    cards.forEach(card => observer.observe(card));
   }
 }
 
@@ -1175,8 +1292,9 @@ if (sortDirectionButton) {
     const newDirection = sortState.direction === "asc" ? "desc" : "asc";
     sortState.direction = newDirection;
     sortDirectionButton.dataset.direction = newDirection;
-    sortDirectionButton.textContent = newDirection === "asc" ? "↑" : "↓";
-    sortDirectionButton.setAttribute("aria-label", newDirection === "asc" ? "切换为降序" : "切换为升序");
+    const newLabel = newDirection === "asc" ? "切换为降序" : "切换为升序";
+    sortDirectionButton.setAttribute("aria-label", newLabel);
+    sortDirectionButton.setAttribute("title", newLabel);
     updateTokenView();
   });
 }
@@ -1195,6 +1313,14 @@ if (filterGraduationSelect) {
   });
 }
 
+function cancelCleanupMode() {
+  if (!isCleanupModeActive) return;
+  isCleanupModeActive = false;
+  tokensToDelete = [];
+  updateCleanupButtonState(false);
+  // 退出模式后，需要重新应用筛选和排序
+  updateTokenView();
+}
 const shouldAutoFocusSearch = (event) => {
   if (!searchInput) {
     return false;
@@ -1203,6 +1329,11 @@ const shouldAutoFocusSearch = (event) => {
     return false;
   }
   if (event.ctrlKey || event.metaKey || event.altKey) {
+    return false;
+  }
+  // 忽略单独的修饰键（Shift, Control, Alt, Meta）和功能键
+  const isModifierOnly = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock'].includes(event.key);
+  if (isModifierOnly) {
     return false;
   }
   const target = event.target;
@@ -1221,18 +1352,6 @@ const shouldAutoFocusSearch = (event) => {
   }
   return event.key === 'Backspace' || event.key === 'Delete';
 };
-
-window.addEventListener('keydown', (event) => {
-  if (!shouldAutoFocusSearch(event)) {
-    return;
-  }
-  searchInput.focus({ preventScroll: true });
-  const value = searchInput.value || '';
-  if (typeof searchInput.setSelectionRange === 'function') {
-    const pos = value.length;
-    searchInput.setSelectionRange(pos, pos);
-  }
-});
 
 const handlePageActivation = () => {
   if (!isDocumentVisible()) {
@@ -1287,6 +1406,94 @@ tokenGrid.addEventListener("click", (event) => {
   }
 });
 
+function updateCleanupButtonState(isActive) {
+  if (!removeDeadButton) return;
+  const useTag = removeDeadButton.querySelector('use');
+  if (isActive) {
+    removeDeadButton.dataset.cleanupActive = 'true';
+    removeDeadButton.classList.add('is-active');
+    removeDeadButton.title = '确认删除';
+    if (useTag) useTag.setAttribute('href', '#confirm-path');
+    showToast(`再次点击确认删除 ${tokensToDelete.length} 个 Token，或点击其他地方取消`, 'info', { duration: 0, type: 'cleanup-prompt' });
+  } else {
+    removeDeadButton.dataset.cleanupActive = 'false';
+    removeDeadButton.classList.remove('is-active');
+    removeDeadButton.title = '清理不活跃的 Token';
+    if (useTag) useTag.setAttribute('href', '#trash-path');
+    // 如果当前是清理提示，则关闭它
+    if (activeToast && activeToast.dataset.toastType === 'cleanup-prompt') {
+      closeActiveToast();
+    }
+  }
+}
+
+window.addEventListener('keydown', (event) => {
+  // 1. 处理 Escape 键
+  if (event.key === 'Escape') {
+    // 优先退出清理模式
+    if (isCleanupModeActive) {
+      event.preventDefault();
+      cancelCleanupMode();
+      return;
+    }
+    // 其次关闭可见的浮层
+    if (addTokenPopover && !addTokenPopover.hidden && addTokenPopover.classList.contains('visible')) {
+      event.preventDefault();
+      closeAddPopover();
+    } else if (searchTokenPopover && !searchTokenPopover.hidden && searchTokenPopover.classList.contains('visible')) {
+      event.preventDefault();
+      closeSearchPopover();
+    }
+    return; // Escape 键处理完毕
+  }
+
+  // 2. 处理搜索自动聚焦
+  if (shouldAutoFocusSearch(event)) {
+    if (isCleanupModeActive) cancelCleanupMode(); // 开始搜索时，退出清理模式
+    searchInput.focus({ preventScroll: true });
+  }
+});
+
+if (removeDeadButton) {
+  removeDeadButton.addEventListener('click', () => {
+    // 如果当前已处于清理模式，则执行删除
+    if (isCleanupModeActive) {
+      const deadMints = new Set(tokensToDelete.map(t => t.mint));
+      trackedMints = trackedMints.filter(mint => !deadMints.has(mint));
+      saveTrackedMints(trackedMints);
+      latestSnapshot = latestSnapshot.filter(token => !deadMints.has(token.mint));
+      
+      const count = tokensToDelete.length;
+      cancelCleanupMode(); // 退出清理模式并刷新视图
+      showToast(`已成功移除 ${count} 个不活跃的 Token`, 'success');
+      return;
+    }
+
+    // 否则，进入清理模式
+    if (!latestSnapshot || latestSnapshot.length === 0) {
+      showToast('请先等待数据加载完成', 'info');
+      return;
+    }
+
+    // 定义“死亡”Token：市值低于 $20,000 或无法获取价格
+    tokensToDelete = latestSnapshot.filter(token => {
+      const isPriceMissing = !token.price;
+      const isMcapLow = token.info?.mcap != null && token.info.mcap < 20000;
+      return isPriceMissing || isMcapLow;
+    });
+
+    if (tokensToDelete.length === 0) {
+      showToast('未发现不活跃的 Token', 'info');
+      tokensToDelete = [];
+      return;
+    }
+
+    isCleanupModeActive = true;
+    updateCleanupButtonState(true);
+    updateTokenView();
+  });
+}
+
 if (addTokenButton && addTokenPopover) {
   addTokenButton.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -1294,6 +1501,7 @@ if (addTokenButton && addTokenPopover) {
     // 如果搜索浮层是打开的，则执行交换动画
     if (searchTokenPopover && !searchTokenPopover.hidden && typeof anime === "function") {
       addTokenButton.classList.add('is-active');
+      closeSearchPopover(); // 使用标准函数关闭
       searchTokenButton.classList.remove('is-active');
 
       // 在开始新动画前，移除所有相关的正在进行的动画，防止冲突
@@ -1310,22 +1518,11 @@ if (addTokenButton && addTokenPopover) {
       });
 
       tl.add({
-        targets: searchTokenPopover,
-        translateY: [0, -15],
-        opacity: [1, 0],
-        scale: [1, 0.95],
-      }, 0).add({
         targets: addTokenPopover,
         translateY: [-20, 0],
         opacity: [0, 1],
         scale: [0.95, 1],
         begin: () => mintInput?.focus(),
-      }, 0).finished.then(() => {
-        searchTokenPopover.classList.remove("visible");
-        searchTokenPopover.hidden = true;
-        searchTokenPopover.style.zIndex = '';
-        searchTokenPopover.style.cssText = ''; // 彻底清除动画残留样式
-        addTokenPopover.style.zIndex = '';
       });
 
       addTokenPopover.classList.add("visible");
@@ -1341,8 +1538,7 @@ if (addTokenButton && addTokenPopover) {
         mintInput?.focus();
       });
     } else {
-      addTokenPopover.classList.remove("visible");
-      addTokenButton.classList.remove('is-active');
+      closeAddPopover();
     }
   });
 
@@ -1355,6 +1551,15 @@ if (addTokenButton && addTokenPopover) {
   addTokenPopover.addEventListener('click', e => e.stopPropagation());
 }
 
+function closeAddPopover() {
+  if (!addTokenPopover || addTokenPopover.hidden || !addTokenPopover.classList.contains('visible')) return;
+
+  addTokenPopover.addEventListener('transitionend', () => {
+    if (!addTokenPopover.classList.contains('visible')) addTokenPopover.hidden = true;
+  }, { once: true });
+  addTokenPopover.classList.remove("visible");
+  addTokenButton.classList.remove('is-active');
+}
 if (searchTokenButton && searchTokenPopover) {
   searchTokenButton.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -1362,55 +1567,18 @@ if (searchTokenButton && searchTokenPopover) {
     // 如果添加浮层是打开的，则执行交换动画
     if (addTokenPopover && !addTokenPopover.hidden && typeof anime === "function") {
       searchTokenButton.classList.add('is-active');
-      addTokenButton.classList.remove('is-active');
-
-      // 在开始新动画前，移除所有相关的正在进行的动画，防止冲突
-      anime.remove(addTokenPopover);
-      anime.remove(searchTokenPopover);
-
-      addTokenPopover.style.zIndex = '9';
-      searchTokenPopover.style.zIndex = '10';
-      searchTokenPopover.hidden = false;
-
-      const tl = anime.timeline({
-        easing: 'easeOutExpo',
-        duration: 150
-      });
-
-      tl.add({
-        targets: addTokenPopover,
-        translateY: [0, -15],
-        opacity: [1, 0],
-        scale: [1, 0.95],
-      }, 0).add({
-        targets: searchTokenPopover,
-        translateY: [-20, 0],
-        opacity: [0, 1],
-        scale: [0.95, 1],
-        begin: () => searchInput?.focus(),
-      }, 0).finished.then(() => {
-        addTokenPopover.classList.remove("visible");
-        addTokenPopover.hidden = true;
-        addTokenPopover.style.zIndex = '';
-        addTokenPopover.style.cssText = ''; // 彻底清除动画残留样式
-        searchTokenPopover.style.zIndex = '';
-      });
-
-      searchTokenPopover.classList.add("visible");
+      const useTag = searchTokenButton.querySelector('use');
+      if (useTag) useTag.setAttribute('href', '#close-path');
+      closeAddPopover();
+      openSearchPopover();
       return;
     }
 
     // 否则，执行常规的打开/关闭动画
     if (searchTokenPopover.hidden) {
-      searchTokenPopover.hidden = false;
-      searchTokenButton.classList.add('is-active');
-      requestAnimationFrame(() => {
-        searchTokenPopover.classList.add("visible");
-        searchInput?.focus();
-      });
+      openSearchPopover();
     } else {
-      searchTokenPopover.classList.remove("visible");
-      searchTokenButton.classList.remove('is-active');
+      closeSearchPopover();
     }
   });
 
@@ -1423,6 +1591,27 @@ if (searchTokenButton && searchTokenPopover) {
   searchTokenPopover.addEventListener('click', e => e.stopPropagation());
 }
 
+function openSearchPopover() {
+  if (!searchTokenPopover || !searchTokenPopover.hidden) return;
+  searchTokenPopover.hidden = false;
+  const useTag = searchTokenButton.querySelector('use');
+  if (useTag) useTag.setAttribute('href', '#close-path');
+  searchTokenButton.classList.add('is-active');
+  requestAnimationFrame(() => {
+    searchTokenPopover.classList.add("visible");
+    searchInput?.focus();
+  });
+}
+function closeSearchPopover() {
+  if (!searchTokenPopover || searchTokenPopover.hidden || !searchTokenPopover.classList.contains('visible')) return;
+  const useTag = searchTokenButton.querySelector('use');
+  searchTokenPopover.addEventListener('transitionend', () => {
+    if (useTag && !searchTokenPopover.classList.contains('visible')) useTag.setAttribute('href', '#search-path');
+    if (!searchTokenPopover.classList.contains("visible")) searchTokenPopover.hidden = true;
+  }, { once: true });
+  searchTokenPopover.classList.remove("visible");
+  searchTokenButton.classList.remove('is-active');
+}
 // 页面加载时，为标题和工具栏添加入场动画
 if (typeof anime === "function") {
   // 1. 将标题文字分割成独立的 span，为逐字动画做准备
@@ -1459,15 +1648,73 @@ refresh().then(() => {
   scheduleRefresh();
 });
 
+if (backToTopButton) {
+  const header = document.querySelector('.app-header');
+
+  if (header && typeof IntersectionObserver !== 'undefined') {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // 当 header 元素不再与视口交叉时 (即滚出屏幕)，显示按钮
+        backToTopButton.classList.toggle('visible', !entry.isIntersecting);
+      },
+      {
+        root: null, // 相对于视口
+        threshold: 0, // 目标元素一离开视口就触发
+      }
+    );
+    observer.observe(header);
+  } else {
+    // Fallback for older browsers or if header is not found
+    window.addEventListener('scroll', () => {
+      backToTopButton.classList.toggle('visible', window.scrollY > 300);
+    }, { passive: true });
+  }
+
+  // 监听点击事件，平滑滚动到页面顶部
+  backToTopButton.addEventListener('click', () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
+}
+
 document.addEventListener("click", (event) => {
   if (addTokenPopover && !addTokenPopover.hidden && !addTokenPopover.contains(event.target) && !addTokenButton.contains(event.target)) {
-      addTokenPopover.classList.remove("visible");
-      addTokenButton.classList.remove('is-active');
+    closeAddPopover();
   }
   if (searchTokenPopover && !searchTokenPopover.hidden) {
     if (!searchTokenPopover.contains(event.target) && !searchTokenButton.contains(event.target)) {
-      searchTokenPopover.classList.remove("visible");
-      searchTokenButton.classList.remove('is-active');
+      closeSearchPopover();
+    }
+  }
+
+  // 如果处于清理模式，并且点击的不是清理按钮本身，则取消清理模式
+  if (isCleanupModeActive) {
+    const isClickOnCleanupButton = removeDeadButton && removeDeadButton.contains(event.target);
+    if (!isClickOnCleanupButton) {
+      cancelCleanupMode();
     }
   }
 });
+
+// 吸顶工具栏状态检测
+const stickyControls = document.querySelector('.filter-sort-controls');
+const stickySentinel = document.querySelector('.sticky-sentinel');
+
+if (stickyControls && stickySentinel && typeof IntersectionObserver !== 'undefined') {
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      // 当哨兵元素不再可见时，说明工具栏已经吸顶
+      stickyControls.classList.toggle('is-stuck', !entry.isIntersecting);
+    },
+    {
+      root: null, // 相对于视口
+      threshold: 0,
+      // 当哨兵元素的底部边缘与视口顶部对齐时触发
+      rootMargin: `-17px 0px 0px 0px`
+    }
+  );
+
+  observer.observe(stickySentinel);
+}

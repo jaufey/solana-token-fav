@@ -1,4 +1,13 @@
 :root {
+  /* 注册一个可动画的 CSS 属性，用于 SVG 路径变形 */
+  @property --arrow-path {
+    syntax: "<path()>";
+    inherits: false;
+    initial-value: path("M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z");
+  }
+  --arrow-path-down: path("M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z");
+  --arrow-path-up: path("M11.9999 10.8286L16.9497 15.7783L18.3639 14.3641L11.9999 8.0001L5.63599 14.3641L7.0502 15.7783L11.9999 10.8286Z");
+  --arrow-path-flat: path("M11.9999 12L16.9497 12L18.3639 12L11.9999 12L5.63599 12L7.0502 12L11.9999 12Z");
   /* Glassmorphism Base - Dark Theme (Default) */
   --bg: #0d1117; /* Dark base color */
   --bg-secondary: #1c2128; /* Slightly lighter dark color for gradient/depth */
@@ -80,7 +89,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  padding: 2.5rem 0 1.5rem;
+  padding-top: 2.5rem;
   text-align: center;
 }
 
@@ -88,6 +97,7 @@ body {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 2.5rem);
   letter-spacing: 0.08em;
+  text-wrap: balance;
 }
 
 .header-toolbar {
@@ -96,8 +106,6 @@ body {
   gap: 0.75rem;
   width: min(var(--layout-max-width), 100%);
   margin: 0 auto;
-  flex-wrap: wrap;
-  margin-top: 1rem; /* 增加与标题的间距 */
   /* 增加 flex 布局以实现两端对齐 */
   justify-content: space-between;
 }
@@ -234,7 +242,7 @@ body {
   align-items: center;
   gap: 2rem;
   width: min(var(--layout-max-width), 100%);
-  margin: 1rem auto 0;
+  margin: 1.5rem auto 0;
   flex-wrap: wrap;
   padding: 0.75rem;
   border: 1px solid var(--glass-border);
@@ -242,6 +250,32 @@ body {
   background: var(--surface-1);
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: 0 4px 10px var(--glass-shadow);
+  /* 吸顶效果 */
+  position: sticky;
+  top: 1rem;
+  z-index: 500;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-sentinel {
+  position: relative;
+  height: 1px;
+  top: 0;
+  width: 100%;
+}
+
+.filter-sort-controls.is-stuck {
+  /* 灵动岛效果：缩小宽度、加大圆角、拉伸内边距 */
+  width: min(880px, 90%);
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 32px var(--glass-shadow);
+}
+
+.filter-sort-controls.is-stuck .controls-left,
+.filter-sort-controls.is-stuck .controls-right {
+  animation: jelly-pop 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
 .controls-left {
@@ -257,6 +291,14 @@ body {
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.token-counter {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .control-set {
@@ -282,6 +324,16 @@ body {
   cursor: pointer;
 }
 
+.control-button .sort-arrow path {
+  /* 使用我们注册的 --arrow-path 变量，并为其添加过渡效果 */
+  d: var(--arrow-path, var(--arrow-path-down));
+  transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.control-button[data-direction="asc"] {
+  /* 升序时，改变 --arrow-path 变量的值 */
+  --arrow-path: var(--arrow-path-up);
+}
 .add-group-wrapper {
   position: relative;
 }
@@ -305,6 +357,15 @@ body {
 
 .add-token-trigger:hover {
   background: var(--surface-2);
+}
+
+.add-token-trigger svg {
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.add-token-trigger.is-active svg {
+  /* 激活时向右旋转45度，变为关闭图标 */
+  transform: rotate(45deg);
 }
 
 .add-token-trigger.is-active {
@@ -359,6 +420,11 @@ body {
   box-shadow: 0 4px 10px var(--glass-shadow);
 }
 
+.search-token-trigger svg use {
+  /* 为 d (路径数据) 属性添加过渡效果 */
+  transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .search-token-trigger:hover {
   background: var(--surface-2);
 }
@@ -369,6 +435,31 @@ body {
   color: var(--accent);
 }
 
+.remove-dead-trigger svg use {
+  transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.remove-dead-trigger.is-active {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.remove-dead-trigger {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-1);
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 160ms ease;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 4px 10px var(--glass-shadow);
+}
 .search-token-popover {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -513,7 +604,7 @@ body {
 }
 
 .token-grid {
-  margin-top: 2em !important;
+  margin-top: 2.5rem !important; /* 增加与筛选/排序栏的间距 */
   width: min(var(--layout-max-width), 100%);
   margin-inline: auto;
   display: grid;
@@ -568,11 +659,6 @@ body {
   /* Hover effect with slightly brighter glass background */
   background: rgba(255, 255, 255, 0.12);
   box-shadow: 0 10px 40px var(--glass-shadow);
-}
-
-.token-card.is-graduated {
-  border-color: var(--accent);
-  box-shadow: 0 8px 32px var(--glass-shadow), 0 0 12px var(--accent-weak);
 }
 
 body[data-theme="light"] .token-card:hover {
@@ -1100,7 +1186,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
-    margin: 0 auto 1.25rem;
+    margin: 0 auto;
   }
 
   .header-left {

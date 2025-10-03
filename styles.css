@@ -1,4 +1,13 @@
 :root {
+  /* 注册一个可动画的 CSS 属性，用于 SVG 路径变形 */
+  @property --arrow-path {
+    syntax: "<path()>";
+    inherits: false;
+    initial-value: path("M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z");
+  }
+  --arrow-path-down: path("M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z");
+  --arrow-path-up: path("M11.9999 10.8286L16.9497 15.7783L18.3639 14.3641L11.9999 8.0001L5.63599 14.3641L7.0502 15.7783L11.9999 10.8286Z");
+  --arrow-path-flat: path("M11.9999 12L16.9497 12L18.3639 12L11.9999 12L5.63599 12L7.0502 12L11.9999 12Z");
   --bg: #0d1117;
   --card-bg: rgba(13, 17, 23, 0.8);
   --card-border: rgba(255, 255, 255, 0.08);
@@ -55,8 +64,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* 增加 flex 布局以实现两端对齐 */
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
-  padding: 2.5rem 0 1.5rem;
+  padding-top: 2.5rem;
   text-align: center;
 }
 
@@ -64,6 +76,7 @@ body {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 2.5rem);
   letter-spacing: 0.08em;
+  text-wrap: balance;
 }
 
 .header-toolbar {
@@ -197,12 +210,40 @@ body[data-theme="light"] .header-action:hover {
   align-items: center;
   gap: 2rem;
   width: min(var(--layout-max-width), 100%);
-  margin: 1rem auto 0;
+  margin: 1.5rem auto 0; /* 增加与 header 的间距 */
   flex-wrap: wrap;
   padding: 0.75rem;
   border: 1px solid var(--surface-border);
   border-radius: 12px;
   background: var(--surface-1);
+  backdrop-filter: blur(10px);
+  /* 吸顶效果 */
+  position: sticky;
+  top: 1rem; /* 距离顶部保留 1rem 间距 */
+  z-index: 500;
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-sentinel {
+  position: relative;
+  height: 1px;
+  top: 0;
+  width: 100%;
+}
+
+.filter-sort-controls.is-stuck {
+  /* 灵动岛效果：缩小宽度、加大圆角、拉伸内边距 */
+  width: min(880px, 90%);
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.filter-sort-controls.is-stuck .controls-left,
+.filter-sort-controls.is-stuck .controls-right {
+  /* 果冻弹簧效果 */
+  animation: breathe-pop 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
 
 .controls-left {
@@ -218,6 +259,14 @@ body[data-theme="light"] .header-action:hover {
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.token-counter {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .control-set {
@@ -242,6 +291,35 @@ body[data-theme="light"] .header-action:hover {
   cursor: pointer;
 }
 
+.control-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-border);
+  color: inherit;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.control-button:hover {
+  border-color: var(--accent);
+}
+
+.control-button .sort-arrow path {
+  /* 使用我们注册的 --arrow-path 变量，并为其添加过渡效果 */
+  d: var(--arrow-path, var(--arrow-path-down));
+  transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.control-button[data-direction="asc"] {
+  /* 升序时，改变 --arrow-path 变量的值 */
+  --arrow-path: var(--arrow-path-up);
+}
 .control-select option {
   background: var(--bg);
   color: var(--fg);
@@ -268,6 +346,15 @@ body[data-theme="light"] .header-action:hover {
 .add-token-trigger:hover {
   border-color: var(--accent);
   background: var(--accent-weak);
+}
+
+.add-token-trigger svg {
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.add-token-trigger.is-active svg {
+  /* 激活时向右旋转45度，变为关闭图标 */
+  transform: rotate(45deg);
 }
 
 .add-token-trigger.is-active {
@@ -324,10 +411,45 @@ body[data-theme="light"] .header-action:hover {
   background: var(--accent-weak);
 }
 
+.search-token-trigger svg use {
+  /* 为 d (路径数据) 属性添加过渡效果 */
+  transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .search-token-trigger.is-active {
   background: var(--accent-weak);
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.remove-dead-trigger svg use {
+  transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.remove-dead-trigger.is-active {
+  border-color: var(--accent);
+  background: var(--accent-weak);
+  color: var(--accent);
+}
+
+@keyframes breathe-pop {
+  0% { transform: scale(1); }
+  60% { transform: scale(1.03, 0.97); }
+  100% { transform: scale(1); }
+}
+
+.remove-dead-trigger {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-1);
+  cursor: pointer;
+  transition: all 160ms ease;
 }
 
 .search-token-popover {
@@ -476,7 +598,7 @@ body[data-theme="light"] .controls button {
 }
 
 .token-grid {
-  margin-top: 2em !important;
+  margin-top: 2.5rem !important; /* 增加与筛选/排序栏的间距 */
   width: min(var(--layout-max-width), 100%);
   margin-inline: auto;
   display: grid;
@@ -528,23 +650,6 @@ body[data-theme="light"] .controls button {
   transform: translateY(-3px);
   border-color: var(--accent);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
-}
-
-.token-card.is-graduated {
-  border-color: var(--accent);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24), 0 0 12px var(--accent-weak);
-}
-
-.token-card.is-graduated:hover {
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), 0 0 16px var(--accent-weak);
-}
-
-body[data-theme="light"] .token-card.is-graduated {
-  box-shadow: 0 20px 45px rgba(221, 165, 206, 0.16), 0 0 12px var(--accent-weak);
-}
-
-body[data-theme="light"] .token-card.is-graduated:hover {
-  box-shadow: 0 24px 52px rgba(221, 165, 206, 0.22), 0 0 16px var(--accent-weak);
 }
 
 body[data-theme="light"] .token-card {
@@ -1134,7 +1239,7 @@ body[data-theme="light"] .toast {
   /* flex-direction: column; */
   align-items: stretch;
   gap: 0.75rem;
-  margin: 0 auto 1.25rem;
+  margin: 0 auto;
 }
 
 .header-left {
@@ -1180,7 +1285,7 @@ body[data-theme="light"] .toast {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
-    margin: 0 auto 1.25rem;
+    margin: 0 auto;
   }
 
   .header-left {
