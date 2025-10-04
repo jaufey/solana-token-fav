@@ -301,9 +301,11 @@ body[data-theme="light"] .header-action:hover {
 }
 
 .token-counter-container {
-position: fixed;
-  top: 2rem;       /* 距离顶部 */
-  right: 2rem;     /* 距离右侧 */
+  position: fixed;
+  top: 2rem;
+  /* 距离顶部 */
+  right: 2rem;
+  /* 距离右侧 */
   z-index: 0;
   /* 置于大部分内容之下 */
   display: flex;
@@ -317,12 +319,17 @@ position: fixed;
   padding: 0;
   opacity: 0.1;
   /* 在新拟态下可以稍微亮一点 */
-pointer-events: none; /* 穿透鼠标事件 */
-  transform: rotate(15deg); /* 旋转15度 */
-  transform-origin: top right; /* 以右上角为轴心旋转 */
+  pointer-events: none;
+  /* 穿透鼠标事件 */
+  transform: rotate(15deg);
+  /* 旋转15度 */
+  transform-origin: top right;
+  /* 以右上角为轴心旋转 */
 }
+
 .token-counter-container .counter-separator {
-  font-size: 8rem; /* 巨大的分隔符 */
+  font-size: 8rem;
+  /* 巨大的分隔符 */
   font-weight: 200;
 }
 
@@ -804,7 +811,8 @@ body[data-theme="light"] .controls button {
   border: none;
   /* Removed hard border */
   border-radius: 14px;
-  padding: 2.8rem 0.95rem 0.95rem; /* 调整顶部内边距 */
+  padding: 2.8rem 0.95rem 0.95rem;
+  /* 调整顶部内边距 */
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -821,10 +829,14 @@ body[data-theme="light"] .controls button {
   top: 0;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: 56px;
+  /* 调小图片尺寸 */
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px; /* 调整圆角 */
+  border-radius: 14px;
+  /* 调整圆角 */
   overflow: hidden;
   /* Token image background can be subtle accent */
   background: var(--surface-1);
@@ -861,7 +873,10 @@ body[data-view="compact"] .token-card {
   align-items: center;
   padding: 0.5rem 0.65rem;
   gap: 0.4rem;
-  min-height: auto;
+  height: 52px;
+  /* 调整高度为 52px */
+  padding: 0.35rem 0.65rem;
+  /* 调整内边距以适应新高度 */
   min-width: 0;
   border-radius: 12px;
   border: none;
@@ -896,14 +911,28 @@ body[data-view="compact"] .token-image {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+  width: 40px;
+    height: 40px;
+    min-width: 40px;
+    flex: 0 0 40px;
 }
 
 body[data-view="compact"] .token-icon {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  flex: 0 0 34px;
+  width: 40px;
+  /* 调整图片容器尺寸 */
+  height: 40px;
+  min-width: 40px;
+  flex: 0 0 40px;
+}
+
+body[data-view="compact"] .token-icon {
+  /* 图标填充其容器 */
+  width: 100%;
+  height: 100%;
+  min-width: auto;
+  /* 重置 min-width */
+  flex: none;
+  /* 重置 flex */
 }
 
 body[data-view="compact"] .token-header {
@@ -996,8 +1025,10 @@ body[data-view="compact"] .token-card:hover .token-remove {
 }
 
 .token-icon {
-  width: 40px;   /* 调整图片尺寸 */
-  height: 40px;  /* 调整图片尺寸 */
+  width: 40px;
+  /* 调整图片尺寸 */
+  height: 40px;
+  /* 调整图片尺寸 */
   border-radius: 12px;
   border: none;
   background: var(--surface-2);
@@ -1006,18 +1037,24 @@ body[data-view="compact"] .token-card:hover .token-remove {
 
 .token-title {
   display: flex;
-  flex-direction: column; /* 移除 align-items: center */
+  flex-direction: column;
+  align-items: flex-start;
+  /* 改为左对齐 */
   gap: 0.2rem;
   min-width: 0;
 }
 
 .token-title h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.2rem;
+  /* 调整字号 */
   line-height: 1.2;
-  text-align: center;     /* 只居中 h2 (symbol) */
-  width: 100%;            /* 确保 h2 占满宽度以便居中 */
-  margin-top: 0.5rem;     /* 调整顶部间距以获得更好的视觉平衡 */
+  text-align: left;
+  /* 改为左对齐 */
+  width: 100%;
+  /* 确保 h2 占满宽度以便居中 */
+  margin-top: 0.5rem;
+  /* 调整顶部间距以获得更好的视觉平衡 */
 }
 
 .token-title .symbol {
@@ -1086,8 +1123,10 @@ body[data-view="compact"] .token-card:hover .token-remove {
 /* --- Neumorphism Remove Button Style --- */
 .token-remove {
   position: absolute;
-  top: 0.5rem;        /* 相对于卡片顶部定位 */
-  right: 0.5rem;      /* 相对于卡片右侧定位 */
+  top: 0.5rem;
+  /* 相对于卡片顶部定位 */
+  right: 0.5rem;
+  /* 相对于卡片右侧定位 */
   background: var(--surface-1);
   border: none;
   border-radius: 12px;
@@ -1151,7 +1190,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
-  margin-top: 1rem;
+  /* margin-top: 1rem; */
   font-size: 0.72rem;
   color: var(--muted);
 }

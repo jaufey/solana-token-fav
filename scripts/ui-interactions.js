@@ -127,43 +127,39 @@ if (themeToggle) {
 // View Toggle
 if (viewToggle) {
   viewToggle.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-view]");
-    if (!target || !viewToggle.contains(target)) return;
-    const requested = target.dataset.view;
-    if (!requested || requested === document.body.dataset.view) return;
+    // 如果组件只有两个选项，点击任意位置都应切换
+    const currentView = document.body.dataset.view;
+    const requested = currentView === "compact" ? "expanded" : "compact";
+
     const activate = () => {
+      // 必须在 startViewTransition 的回调中执行
+      // 1. 先应用新的视图类，让 CSS 规则就位
       applyView(requested);
+      // 2. 再更新 DOM 结构，让浏览器可以捕捉新旧布局的差异
+      updateTokenView();
       saveViewPreference(requested);
     };
+    // 将 DOM 更新包裹在 View Transition 中
     if (typeof document.startViewTransition === "function" && shouldUseViewTransition()) {
       document.startViewTransition(activate);
     } else {
       activate();
     }
   });
-  viewToggle.addEventListener("keydown", (event) => {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    const segments = Array.from(viewToggle.querySelectorAll("[data-view]"));
-    const activeIndex = segments.findIndex((segment) => segment.classList.contains("is-active"));
-    if (activeIndex === -1) return;
-    const delta = event.key === "ArrowLeft" ? -1 : 1;
-    const nextIndex = (activeIndex + delta + segments.length) % segments.length;
-    segments[nextIndex].focus({ preventScroll: true });
-    segments[nextIndex].click();
-    event.preventDefault();
-  });
 }
 
 // Display Mode Toggle
 if (displayToggle) {
   displayToggle.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-mode]");
-    if (!target || !displayToggle.contains(target)) return;
-    const requested = target.dataset.mode;
-    if (!requested || requested === document.body.dataset.displayMode) return;
+    // 如果组件只有两个选项，点击任意位置都应切换
+    const currentMode = document.body.dataset.displayMode;
+    const requested = currentMode === "mcap" ? "price" : "mcap";
+
     const activate = () => {
-      applyDisplayMode(requested);
+      // 1. 先更新 DOM 结构
       updateTokenView();
+      // 2. 再应用新的显示模式
+      applyDisplayMode(requested);
       saveDisplayPreference(requested);
     };
     if (typeof document.startViewTransition === "function" && shouldUseViewTransition()) {
@@ -171,17 +167,6 @@ if (displayToggle) {
     } else {
       activate();
     }
-  });
-  displayToggle.addEventListener("keydown", (event) => {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    const segments = Array.from(displayToggle.querySelectorAll("[data-mode]"));
-    const activeIndex = segments.findIndex((segment) => segment.classList.contains("is-active"));
-    if (activeIndex === -1) return;
-    const delta = event.key === "ArrowLeft" ? -1 : 1;
-    const nextIndex = (activeIndex + delta + segments.length) % segments.length;
-    segments[nextIndex].focus({ preventScroll: true });
-    segments[nextIndex].click();
-    event.preventDefault();
   });
 }
 

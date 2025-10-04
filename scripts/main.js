@@ -44,6 +44,7 @@ let latestSnapshot = [];
 let searchQuery = '';
 let isCleanupModeActive = false;
 let tokensToDelete = [];
+let isQuickSearchActive = false; // 标记是否由快捷方式触发了搜索
 
 export let filteredCounter = null;
 export let totalCounter = null;
@@ -226,11 +227,7 @@ function normalizeSymbol(value) {
   if (typeof value !== 'string') {
     return '';
   }
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return '';
-  }
-  return trimmed.startsWith('$') ? trimmed.slice(1) : trimmed;
+  return value.trim();
 }
 
 function buildViewTransitionName(prefix, mint) {
@@ -246,22 +243,8 @@ function buildViewTransitionName(prefix, mint) {
 }
 
 function formatSymbolForView(symbol, viewMode) {
-  const view = viewMode === "compact" ? "compact" : "expanded";
   if (!symbol) return symbol;
-  return view === "compact" ? symbol : (symbol.startsWith("$") ? symbol : `$${symbol}`);
-}
-
-function updateSymbolDisplays(viewMode) {
-  if (typeof document === "undefined") {
-    return;
-  }
-  const view = viewMode === "compact" ? "compact" : "expanded";
-  const symbols = document.querySelectorAll(".token-card .symbol");
-  symbols.forEach((element) => {
-    const baseSymbol = element.dataset.baseSymbol;
-    if (!baseSymbol) return;
-    element.textContent = formatSymbolForView(baseSymbol, view);
-  });
+  return symbol;
 }
 
 function applyFilters(tokens) {
@@ -430,9 +413,9 @@ export function updateTokenView() {
 
   if (typeof document.startViewTransition === "function" && canAnimate) {
     document.startViewTransition(() => renderTokens(filtered, { canAnimate }));
-    return;
+  } else {
+    renderTokens(filtered, { canAnimate });
   }
-  renderTokens(filtered, { canAnimate });
 }
 export async function copyMintToClipboard(mint) {
   if (!mint) return;
@@ -618,7 +601,12 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
 
     const imageWrapper = node.querySelector(".token-image");
     if (imageWrapper) {
-      imageWrapper.style.viewTransitionName = buildViewTransitionName("token-image", token.mint);
+      const imageTransitionName = canAnimate ? buildViewTransitionName("token-image", token.mint) : '';
+      if (imageTransitionName) {
+        imageWrapper.style.viewTransitionName = imageTransitionName;
+      } else {
+        imageWrapper.style.removeProperty('view-transition-name');
+      }
     }
 
     const icon = node.querySelector(".token-icon");
@@ -632,6 +620,12 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
       const baseSymbol = normalizeSymbol(info?.symbol) || fallback;
       symbolField.dataset.baseSymbol = baseSymbol;
       symbolField.textContent = formatSymbolForView(baseSymbol, document.body?.dataset.view);
+      const symbolTransitionName = canAnimate ? buildViewTransitionName("token-symbol", token.mint) : '';
+      if (symbolTransitionName) {
+        symbolField.style.viewTransitionName = symbolTransitionName;
+      } else {
+        symbolField.style.removeProperty('view-transition-name');
+      }
     }
 
     const nameField = node.querySelector(".token-name");
@@ -730,8 +724,6 @@ function renderTokens(tokens, { canAnimate } = { canAnimate: false }) {
 
     tokenGrid.append(node);
   }
-
-  updateSymbolDisplays(document.body?.dataset.view);
 
   // 使用 anime.js 为卡片添加入场动画
   if (typeof anime === "function") {
@@ -857,8 +849,14 @@ if (mintInput) {
 if (searchInput) {
   searchQuery = searchInput.value.trim();
   const handleSearchInput = () => {
-    searchQuery = searchInput.value.trim();
+    const newQuery = searchInput.value;
+    searchQuery = newQuery.trim();
     updateTokenView();
+
+    // 如果是由快捷方式打开，并且输入框被清空，则自动关闭
+    if (isQuickSearchActive && newQuery === '') {
+      closeSearchPopover();
+    }
   };
   searchInput.addEventListener("input", handleSearchInput);
   searchInput.addEventListener("search", handleSearchInput);
@@ -955,6 +953,43 @@ if (isDocumentVisible() && getClipboardWatchState()) {
   void tryImportMintsFromClipboard();
 }
 
+window.addEventListener('keydown', (event) => {
+  // 1. 处理 Escape 键
+  if (event.key === 'Escape') {
+    // 优先退出清理模式
+    if (isCleanupModeActive) {
+      event.preventDefault();
+      cancelCleanupMode();
+      return;
+    }
+    // 其次关闭可见的浮层
+    if (addTokenPopover && !addTokenPopover.hidden && addTokenPopover.classList.contains('visible')) {
+      event.preventDefault();
+      closeAddPopover();
+    } else if (searchTokenPopover && !searchTokenPopover.hidden && searchTokenPopover.classList.contains('visible')) {
+      event.preventDefault();
+      closeSearchPopover();
+    }
+    return; // Escape 键处理完毕
+  }
+
+  // 2. 处理搜索自动聚焦
+  if (shouldAutoFocusSearch(event)) {
+    if (isCleanupModeActive) cancelCleanupMode(); // 开始搜索时，退出清理模式
+
+    // 打开搜索浮层，它会自动处理聚焦
+    openSearchPopover();
+    isQuickSearchActive = true; // 标记为快捷方式打开
+
+    // 将当前按键的值传递给输入框，防止第一个字符丢失
+    if (event.key.length === 1 && searchInput.value === '') {
+      searchInput.value = event.key;
+      // 手动触发 input 事件以更新搜索结果
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+});
+
 tokenGrid.addEventListener("click", (event) => {
   const copyButton = event.target.closest(".copy-mint");
   if (copyButton) {
@@ -1011,33 +1046,6 @@ function updateCleanupButtonState(isActive) {
     }
   }
 }
-
-window.addEventListener('keydown', (event) => {
-  // 1. 处理 Escape 键
-  if (event.key === 'Escape') {
-    // 优先退出清理模式
-    if (isCleanupModeActive) {
-      event.preventDefault();
-      cancelCleanupMode();
-      return;
-    }
-    // 其次关闭可见的浮层
-    if (addTokenPopover && !addTokenPopover.hidden && addTokenPopover.classList.contains('visible')) {
-      event.preventDefault();
-      closeAddPopover();
-    } else if (searchTokenPopover && !searchTokenPopover.hidden && searchTokenPopover.classList.contains('visible')) {
-      event.preventDefault();
-      closeSearchPopover();
-    }
-    return; // Escape 键处理完毕
-  }
-
-  // 2. 处理搜索自动聚焦
-  if (shouldAutoFocusSearch(event)) {
-    if (isCleanupModeActive) cancelCleanupMode(); // 开始搜索时，退出清理模式
-    searchInput.focus({ preventScroll: true });
-  }
-});
 
 if (removeDeadButton) {
   removeDeadButton.addEventListener('click', () => {
@@ -1162,6 +1170,7 @@ if (searchTokenButton && searchTokenPopover) {
     // 否则，执行常规的打开/关闭动画
     if (searchTokenPopover.hidden) {
       openSearchPopover();
+      isQuickSearchActive = false; // 手动打开，不是快捷方式
     } else {
       closeSearchPopover();
     }
@@ -1196,6 +1205,7 @@ function closeSearchPopover() {
   }, { once: true });
   searchTokenPopover.classList.remove("visible");
   searchTokenButton.classList.remove('is-active');
+  isQuickSearchActive = false; // 关闭时重置标记
 }
 // 页面加载时，为标题和工具栏添加入场动画
 if (typeof anime === "function") {
