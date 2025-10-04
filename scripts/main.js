@@ -1298,7 +1298,7 @@ document.addEventListener("click", (event) => {
 });
 
 // 在页面加载时恢复UI控件的状态
-function restoreUiControls() {
+export function updateFilterAndSortControls() {
   // 恢复排序控件
   const currentSort = getSortState();
   if (sortBySelect) sortBySelect.value = currentSort.by;
@@ -1313,6 +1313,11 @@ function restoreUiControls() {
   const currentFilters = getFilterState();
   if (filterMcapSelect) filterMcapSelect.value = currentFilters.mcap;
   if (filterGraduationSelect) filterGraduationSelect.value = currentFilters.graduation;
+}
+
+// 在页面加载时恢复UI控件的状态
+function restoreUiControls() {
+  updateFilterAndSortControls();
 }
 // 在页面加载时恢复剪贴板监听和刷新间隔设置
 const storedClipboardWatchPreference = loadClipboardWatchPreference();

@@ -2,10 +2,10 @@ import {
   applyTheme, saveThemePreference, loadThemePreference,
   applyView, saveViewPreference, loadViewPreference,
   applyDisplayMode, saveDisplayPreference, loadDisplayPreference,
-  applyClipboardWatchState, saveClipboardWatchPreference, getClipboardWatchState,
+  applyClipboardWatchState, saveClipboardWatchPreference, getClipboardWatchState, resetSortState, resetFilterState,
   applyStyleSheet, loadStylePreference
 } from './ui-state.js';
-import { tryImportMintsFromClipboard, updateTokenView, filteredCounter, totalCounter } from './main.js';
+import { tryImportMintsFromClipboard, updateTokenView, filteredCounter, totalCounter, updateFilterAndSortControls } from './main.js';
 
 const themeToggle = document.getElementById("theme-toggle");
 const viewToggle = document.getElementById("view-toggle");

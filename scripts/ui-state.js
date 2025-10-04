@@ -16,9 +16,12 @@ const FILTER_STATE_STORAGE_KEY = "solana-token-favs:filter";
 
 const STYLE_OPTIONS = [
   "styles.css",
-  "styles-gemini.css",
-  "styles-gemini-2.css",
-  "styles-gemini-3.css"
+  "styles-neumorphism.css",
+  "styles-glassmorphism.css",
+  "styles-maximalism.css",
+  "styles-cyberpunk.css",
+  "styles-pixel.css",
+  "styles-doodle.css"
 ];
 const DEFAULT_STYLE = STYLE_OPTIONS[0];
 
@@ -28,7 +31,8 @@ const displayToggle = document.getElementById("display-toggle");
 const clipboardToggleButton = document.getElementById("clipboard-toggle-button");
 const styleSelect = document.getElementById("style-select");
 const styleSheetLink = document.getElementById("app-style-sheet");
-
+const defaultSortState = { by: "default", direction: "desc" };
+const defaultFilterState = { mcap: "all", graduation: "all" };
 let sortState = loadSortState();
 let filterState = loadFilterState();
 let displayMode = 'mcap';
@@ -213,16 +217,15 @@ export function saveTrackedMints(mints) {
 
 // --- Sort State ---
 function loadSortState() {
-  const defaultState = { by: "default", direction: "desc" };
   const raw = loadPreference(SORT_STATE_STORAGE_KEY);
-  if (!raw) return defaultState;
+  if (!raw) return { ...defaultSortState };
   try {
     const parsed = JSON.parse(raw);
     // 确保加载的数据结构是正确的
-    return { ...defaultState, ...parsed };
+    return { ...defaultSortState, ...parsed };
   } catch (e) {
     console.warn("读取排序状态失败", e);
-    return defaultState;
+    return { ...defaultSortState };
   }
 }
 
@@ -239,17 +242,22 @@ export function setSortState(newState) {
   saveSortState(sortState);
 }
 
+export function resetSortState() {
+  sortState = { ...defaultSortState };
+  saveSortState(sortState);
+  return getSortState();
+}
+
 // --- Filter State ---
 function loadFilterState() {
-  const defaultState = { mcap: "all", graduation: "all" };
   const raw = loadPreference(FILTER_STATE_STORAGE_KEY);
-  if (!raw) return defaultState;
+  if (!raw) return { ...defaultFilterState };
   try {
     const parsed = JSON.parse(raw);
-    return { ...defaultState, ...parsed };
+    return { ...defaultFilterState, ...parsed };
   } catch (e) {
     console.warn("读取筛选状态失败", e);
-    return defaultState;
+    return { ...defaultFilterState };
   }
 }
 
@@ -263,4 +271,10 @@ export function getFilterState() {
 export function setFilterState(newState) {
   filterState = { ...filterState, ...newState };
   saveFilterState(filterState);
+}
+
+export function resetFilterState() {
+  filterState = { ...defaultFilterState };
+  saveFilterState(filterState);
+  return getFilterState();
 }
