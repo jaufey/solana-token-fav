@@ -1,16 +1,20 @@
 :root {
+
   /* 注册一个可动画的 CSS 属性，用于 SVG 路径变形 */
   @property --arrow-path {
     syntax: "<path()>";
     inherits: false;
     initial-value: path("M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z");
   }
+
   --arrow-path-down: path("M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z");
   --arrow-path-up: path("M11.9999 10.8286L16.9497 15.7783L18.3639 14.3641L11.9999 8.0001L5.63599 14.3641L7.0502 15.7783L11.9999 10.8286Z");
   --arrow-path-flat: path("M11.9999 12L16.9497 12L18.3639 12L11.9999 12L5.63599 12L7.0502 12L11.9999 12Z");
   /* Neumorphism Base - Dark Theme (Default) */
-  --bg: #1c2128; /* A darker, non-black background */
-  --card-bg: #1c2128; /* Card base matches background */
+  --bg: #1c2128;
+  /* A darker, non-black background */
+  --card-bg: #1c2128;
+  /* Card base matches background */
   --fg: #f2f6ff;
   --muted: rgba(255, 255, 255, 0.6);
   --accent: #00ffa3;
@@ -19,25 +23,38 @@
   --gain: #6ee7b7;
 
   /* Neumorphism Shadows - Dark Theme */
-  --neum-light-shadow: rgba(255, 255, 255, 0.04); /* Soft white/light shadow */
-  --neum-dark-shadow: rgba(0, 0, 0, 0.7); /* Deep dark shadow */
-  --neum-base-shadow: 10px 10px 20px var(--neum-dark-shadow), -10px -10px 20px var(--neum-light-shadow);
-  --neum-inset-shadow: inset 5px 5px 10px var(--neum-dark-shadow), inset -5px -5px 10px var(--neum-light-shadow);
+  --neum-light-shadow: rgba(255, 255, 255, 0.04);
+  /* Soft white/light shadow */
+  --neum-dark-shadow: rgba(0, 0, 0, 0.7);
+  /* Deep dark shadow */
+  --neum-base-shadow: 10px 10px 20px var(--neum-dark-shadow),
+  -10px -10px 20px var(--neum-light-shadow);
+  --neum-inset-shadow: inset 5px 5px 10px var(--neum-dark-shadow),
+  inset -5px -5px 10px var(--neum-light-shadow);
 
   /* Surface/Border vars updated for Neumorphism aesthetic */
   --surface-1: #1c2128;
   --surface-2: #1c2128;
-  --surface-border: transparent; /* No hard borders in Neumorphism */
+  --surface-border: transparent;
+  /* No hard borders in Neumorphism */
 
   --layout-max-width: 960px;
-  font-family: "Inter", "SF Pro Display", "PingFang SC", system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Inter",
+  "SF Pro Display",
+  "PingFang SC",
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  sans-serif;
 }
 
 body[data-theme="light"] {
   /* Neumorphism Base - Light Theme */
-  --bg: #e0e5ec; /* A light, non-white background */
-  --card-bg: #e0e5ec; /* Card base matches background */
+  --bg: #e0e5ec;
+  /* A light, non-white background */
+  --card-bg: #e0e5ec;
+  /* Card base matches background */
   --fg: #1b1324;
   --muted: rgba(27, 19, 36, 0.62);
   --accent: #ff5fbf;
@@ -46,8 +63,10 @@ body[data-theme="light"] {
   --gain: #0f9664;
 
   /* Neumorphism Shadows - Light Theme */
-  --neum-light-shadow: #ffffff; /* Pure white/light shadow */
-  --neum-dark-shadow: rgba(163, 177, 198, 0.6); /* Soft dark shadow */
+  --neum-light-shadow: #ffffff;
+  /* Pure white/light shadow */
+  --neum-dark-shadow: rgba(163, 177, 198, 0.6);
+  /* Soft dark shadow */
   --neum-base-shadow: 10px 10px 20px var(--neum-dark-shadow), -10px -10px 20px var(--neum-light-shadow);
   --neum-inset-shadow: inset 5px 5px 10px var(--neum-dark-shadow), inset -5px -5px 10px var(--neum-light-shadow);
 
@@ -75,51 +94,6 @@ body {
   padding: 0 1rem 3rem;
 }
 
-.background-counter {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: auto;
-  transform-origin: top right;
-  transform: translateY(38%) rotate(10deg);
-  font-size: clamp(5rem, 11vw, 9rem);
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.05);
-  z-index: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.1em;
-}
-
-.digit-container {
-  display: flex;
-}
-
-.digit-slot {
-  height: 1em;
-  overflow: hidden;
-}
-
-.digit-reel {
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-}
-
-.digit-reel.slide-up {
-  transform: translateY(-50%);
-}
-
-.digit-reel.slide-down {
-  transform: translateY(0);
-}
-
-body[data-theme="light"] .background-counter {
-  color: rgba(0, 0, 0, 0.05);
-}
 
 .app-header {
   position: relative;
@@ -212,7 +186,7 @@ body[data-theme="light"] .background-counter {
   height: 2rem;
 }
 
-.segmented-control .segment + .segment {
+.segmented-control .segment+.segment {
   border-left: none;
 }
 
@@ -245,7 +219,8 @@ body[data-theme="light"] .background-counter {
   height: 2.4rem;
   padding: 0 0.85rem;
   border-radius: 12px;
-  border: none; /* Removed hard border */
+  border: none;
+  /* Removed hard border */
   background: var(--surface-1);
   color: var(--fg);
   cursor: pointer;
@@ -263,6 +238,7 @@ body[data-theme="light"] .background-counter {
   font-size: 1.1rem;
   letter-spacing: 0;
 }
+
 .header-action.style-select {
   display: inline-block;
   min-width: 8.5rem;
@@ -296,7 +272,8 @@ body[data-theme="light"] .background-counter {
 .header-action:active {
   /* Neumorphism Shadow - Pressed/Concave */
   box-shadow: var(--neum-inset-shadow);
-  opacity: 0.85; /* No scale needed for press effect with inset shadow */
+  opacity: 0.85;
+  /* No scale needed for press effect with inset shadow */
 }
 
 .header-action:focus-visible {
@@ -322,6 +299,33 @@ body[data-theme="light"] .header-action:hover {
   box-shadow: var(--neum-inset-shadow);
   white-space: nowrap;
 }
+
+.token-counter-container {
+position: fixed;
+  top: 2rem;       /* 距离顶部 */
+  right: 2rem;     /* 距离右侧 */
+  z-index: 0;
+  /* 置于大部分内容之下 */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* 移除容器自身样式 */
+  background: none;
+
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  opacity: 0.1;
+  /* 在新拟态下可以稍微亮一点 */
+pointer-events: none; /* 穿透鼠标事件 */
+  transform: rotate(15deg); /* 旋转15度 */
+  transform-origin: top right; /* 以右上角为轴心旋转 */
+}
+.token-counter-container .counter-separator {
+  font-size: 8rem; /* 巨大的分隔符 */
+  font-weight: 200;
+}
+
 
 /* --- Neumorphism Select/Dropdown Style --- */
 .refresh-inline-select {
@@ -362,23 +366,28 @@ body[data-theme="light"] .header-action:hover {
   position: relative;
   width: min(var(--layout-max-width), 100%);
   margin: 1.5rem auto 0;
-  height: 78px; /* 预设高度，防止抖动 */
+  height: 78px;
+  /* 预设高度，防止抖动 */
 }
+
 .sticky-wrapper {
   position: sticky;
   top: 1rem;
   z-index: 500;
   display: flex;
   width: 100%;
-  margin-top: -78px; /* offset placeholder height */
+  margin-top: -78px;
+  /* offset placeholder height */
   margin-bottom: 1.5rem;
 }
+
 .sticky-sentinel {
   position: absolute;
   top: 0;
   left: 0;
   height: 1px;
 }
+
 .filter-sort-controls {
   display: flex;
   justify-content: space-between;
@@ -422,7 +431,8 @@ body[data-theme="light"] .header-action:hover {
   align-items: center;
   flex-wrap: nowrap;
   transition: gap 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  flex: 0 1 auto; /* Do not grow, allow shrinking */
+  flex: 0 1 auto;
+  /* Do not grow, allow shrinking */
 }
 
 .controls-right {
@@ -467,6 +477,7 @@ body[data-theme="light"] .header-action:hover {
   /* 升序时，改变 --arrow-path 变量的值 */
   --arrow-path: var(--arrow-path-up);
 }
+
 .add-group-wrapper {
   position: relative;
 }
@@ -574,6 +585,7 @@ body[data-theme="light"] .header-action:hover {
   transition: all 160ms ease, transform 160ms ease;
   box-shadow: 6px 6px 12px var(--neum-dark-shadow), -6px -6px 12px var(--neum-light-shadow);
 }
+
 .remove-dead-trigger svg use {
   transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -602,6 +614,7 @@ body[data-theme="light"] .header-action:hover {
   transition: all 160ms ease, transform 160ms ease;
   box-shadow: 6px 6px 12px var(--neum-dark-shadow), -6px -6px 12px var(--neum-light-shadow);
 }
+
 .search-token-popover {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -648,11 +661,12 @@ body[data-theme="light"] .header-action:hover {
   width: 100%;
 }
 
-.mint-input-row{
+.mint-input-row {
   display: flex;
   gap: 0.5rem;
   width: 100%;
 }
+
 /* Applies concave style to mint inputs as well */
 .mint-input-row input {
   flex: 1;
@@ -663,7 +677,8 @@ body[data-theme="light"] .header-action:hover {
   border-radius: 12px;
   font-size: 0.95rem;
   transition: all 160ms ease, transform 160ms ease;
-  box-shadow: var(--neum-inset-shadow); /* Concave style */
+  box-shadow: var(--neum-inset-shadow);
+  /* Concave style */
 }
 
 .mint-input-row input:focus {
@@ -705,7 +720,8 @@ body[data-theme="light"] #token-search:focus-visible {
 }
 
 .controls button {
-  background: var(--surface-1); /* Removed gradient, use base color */
+  background: var(--surface-1);
+  /* Removed gradient, use base color */
 }
 
 body[data-theme="light"] .controls button {
@@ -765,7 +781,8 @@ body[data-theme="light"] .controls button {
 }
 
 .token-grid {
-  margin-top: 2.5rem !important; /* 增加与筛选/排序栏的间距 */
+  margin-top: 2.5rem !important;
+  /* 增加与筛选/排序栏的间距 */
   width: min(var(--layout-max-width), 100%);
   margin-inline: auto;
   display: grid;
@@ -781,15 +798,18 @@ body[data-theme="light"] .controls button {
 
 /* --- Neumorphism Card Style --- */
 .token-card {
+  /* position: relative; 已经存在，作为删除按钮的定位上下文 */
   position: relative;
   background: var(--card-bg);
-  border: none; /* Removed hard border */
+  border: none;
+  /* Removed hard border */
   border-radius: 14px;
-  padding: 2.8rem 0.95rem 0.95rem;
+  padding: 2.8rem 0.95rem 0.95rem; /* 调整顶部内边距 */
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  backdrop-filter: none; /* Removed blur, not part of Neumorphism style */
+  backdrop-filter: none;
+  /* Removed blur, not part of Neumorphism style */
   overflow: visible;
   transition: all 160ms ease, transform 160ms ease;
   /* Neumorphism Shadow - Raised Card */
@@ -804,7 +824,7 @@ body[data-theme="light"] .controls button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 22px;
+  border-radius: 14px; /* 调整圆角 */
   overflow: hidden;
   /* Token image background can be subtle accent */
   background: var(--surface-1);
@@ -815,7 +835,8 @@ body[data-theme="light"] .controls button {
 }
 
 .token-card:hover {
-  transform: translateY(-2px); /* Slight lift on hover */
+  transform: translateY(-2px);
+  /* Slight lift on hover */
   /* Slightly more intense raised effect on hover */
   box-shadow: 14px 14px 28px var(--neum-dark-shadow), -14px -14px 28px var(--neum-light-shadow);
 }
@@ -964,8 +985,6 @@ body[data-view="compact"] .token-card:hover .token-remove {
 .token-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
 }
 
 .token-main {
@@ -977,8 +996,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
 }
 
 .token-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;   /* 调整图片尺寸 */
+  height: 40px;  /* 调整图片尺寸 */
   border-radius: 12px;
   border: none;
   background: var(--surface-2);
@@ -987,7 +1006,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
 
 .token-title {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 移除 align-items: center */
   gap: 0.2rem;
   min-width: 0;
 }
@@ -996,6 +1015,9 @@ body[data-view="compact"] .token-card:hover .token-remove {
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.2;
+  text-align: center;     /* 只居中 h2 (symbol) */
+  width: 100%;            /* 确保 h2 占满宽度以便居中 */
+  margin-top: 0.5rem;     /* 调整顶部间距以获得更好的视觉平衡 */
 }
 
 .token-title .symbol {
@@ -1013,6 +1035,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   letter-spacing: 0.03em;
   font-family: "JetBrains Mono", "Fira Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+
 .mint-row {
   display: inline-flex;
   align-items: center;
@@ -1062,6 +1085,9 @@ body[data-view="compact"] .token-card:hover .token-remove {
 
 /* --- Neumorphism Remove Button Style --- */
 .token-remove {
+  position: absolute;
+  top: 0.5rem;        /* 相对于卡片顶部定位 */
+  right: 0.5rem;      /* 相对于卡片右侧定位 */
   background: var(--surface-1);
   border: none;
   border-radius: 12px;
@@ -1139,7 +1165,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
   border-radius: 12px;
   border: none;
   background: var(--surface-1);
-  box-shadow: 1px 1px 3px var(--neum-dark-shadow), -1px -1px 3px var(--neum-light-shadow); /* Very subtle raised */
+  box-shadow: 1px 1px 3px var(--neum-dark-shadow), -1px -1px 3px var(--neum-light-shadow);
+  /* Very subtle raised */
 }
 
 .token-stats-row .stat.gain {
@@ -1151,6 +1178,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
   color: var(--loss);
   /* Removed border color, only shadow remains */
 }
+
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -1204,7 +1232,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
 }
 
 .audit {
-  border-top: none; /* Removed hard border */
+  border-top: none;
+  /* Removed hard border */
   padding-top: 0.75rem;
 }
 
@@ -1236,7 +1265,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
   text-align: center;
   padding: 2rem;
   color: var(--muted);
-  border: none; /* Removed dashed border */
+  border: none;
+  /* Removed dashed border */
   border-radius: 16px;
   background: var(--surface-1);
   /* Subtle raised effect for the empty state */
@@ -1333,7 +1363,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
   padding: 0.75rem 1rem;
   border-radius: 12px;
   border: none;
-  background: var(--card-bg); /* Use base color */
+  background: var(--card-bg);
+  /* Use base color */
   color: var(--fg);
   /* Prominent raised shadow for floating toast */
   box-shadow: 10px 10px 20px var(--neum-dark-shadow), -10px -10px 20px var(--neum-light-shadow);
@@ -1362,7 +1393,7 @@ body[data-theme="light"] .toast {
   box-shadow: 10px 10px 20px var(--neum-dark-shadow), -10px -10px 20px var(--neum-light-shadow), 0 0 0 2px var(--loss);
 }
 
-.toast-root .toast + .toast {
+.toast-root .toast+.toast {
   margin-top: 0;
 }
 
@@ -1479,6 +1510,7 @@ body[data-theme="light"] .toast {
   from {
     clip-path: circle(0 at var(--clip-path-origin, center));
   }
+
   to {
     clip-path: circle(var(--clip-path-radius, 150%) at var(--clip-path-origin, center));
   }
@@ -1486,5 +1518,6 @@ body[data-theme="light"] .toast {
 
 html.theme-transition::view-transition-new(root) {
   animation: reveal 1s ease-in-out;
-  mix-blend-mode: normal; /* 确保新视图正常显示 */
+  mix-blend-mode: normal;
+  /* 确保新视图正常显示 */
 }

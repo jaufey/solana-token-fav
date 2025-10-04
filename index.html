@@ -1,4 +1,4 @@
-﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -8,11 +8,6 @@
   </head>
   <body data-theme="dark" data-view="expanded">
 
-    <div class="background-counter" aria-hidden="true">
-      <div id="bg-filtered-count" class="digit-container"></div>
-      <span class="bg-separator">/</span>
-      <div id="bg-total-count" class="digit-container"></div>
-    </div>
     <header class="app-header">
 
       <h1>Solana Meme Token 收藏夹</h1>
@@ -41,6 +36,11 @@
           </div>
           <div class="header-actions-right">
             <div class="refresh-inline">
+              <div id="token-counter-container" class="token-counter-container" hidden>
+                <div id="filtered-token-counter"></div>
+                <span class="counter-separator">/</span>
+                <div id="total-token-counter"></div>
+              </div>
               <p class="last-updated" id="last-updated">数据加载中…</p>
               <select id="refresh-select" class="refresh-inline-select" aria-label="刷新间隔">
                 <option value="180000">3 分钟</option>
@@ -198,7 +198,8 @@
     <button type="button" id="back-to-top-button" class="back-to-top" aria-label="回到顶部" title="回到顶部">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M11.9999 10.8284L7.75732 15.071L6.34311 13.6568L11.9999 8L17.6568 13.6568L16.2426 15.071L11.9999 10.8284Z"></path></svg>
     </button>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+    <script src="counter.js"></script>
     <script type="module" src="scripts/ui-state.js"></script>
     <script type="module" src="scripts/api.js"></script>
     <script type="module" src="scripts/ui-interactions.js"></script>

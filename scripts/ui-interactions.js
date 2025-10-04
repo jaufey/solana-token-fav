@@ -1,11 +1,11 @@
 import {
-  applyTheme, saveThemePreference,
+  applyTheme, saveThemePreference, loadThemePreference,
   applyView, saveViewPreference, loadViewPreference,
   applyDisplayMode, saveDisplayPreference, loadDisplayPreference,
   applyClipboardWatchState, saveClipboardWatchPreference, getClipboardWatchState,
-  applyStyleSheet
+  applyStyleSheet, loadStylePreference
 } from './ui-state.js';
-import { tryImportMintsFromClipboard, updateTokenView } from './main.js';
+import { tryImportMintsFromClipboard, updateTokenView, filteredCounter, totalCounter } from './main.js';
 
 const themeToggle = document.getElementById("theme-toggle");
 const viewToggle = document.getElementById("view-toggle");
@@ -15,6 +15,16 @@ const styleSelect = document.getElementById("style-select");
 const mintFeedback = document.getElementById("mint-feedback");
 const toastRoot = document.getElementById("toast-root");
 
+const storedStylePreference = loadStylePreference();
+if (storedStylePreference) {
+  applyStyleSheet(storedStylePreference, { persist: false, updateControl: true });
+} else if (styleSelect) {
+  applyStyleSheet(styleSelect.value, { persist: false, updateControl: true });
+}
+
+const storedThemePreference = loadThemePreference();
+const resolvedTheme = storedThemePreference ?? (document.body.dataset.theme === 'light' ? 'light' : 'dark');
+applyTheme(resolvedTheme);
 let feedbackTimerId = null;
 let toastTimerId = null;
 let activeToast = null;
@@ -55,7 +65,7 @@ export function showToast(message, status = "info", options = {}) {
   toast.className = "toast";
   toast.dataset.status = status;
   toast.dataset.toastType = type;
-  toast.textContent = message;
+  toast.innerHTML = message; // 允许在提示信息中使用 HTML，例如 <br>
   toastRoot.appendChild(toast);
   activeToast = toast;
 
@@ -100,59 +110,10 @@ export function clearFeedback() {
   mintFeedback.hidden = true;
 }
 
-// --- Animated Counter ---
-export function updateAnimatedCounter(container, newNumber) {
-  const newStr = String(newNumber);
-  const oldStr = container.dataset.value || '';
-  if (newStr === oldStr && container.children.length > 0) return;
-  container.dataset.value = newStr;
-
-  const maxLength = Math.max(newStr.length, oldStr.length);
-  const paddedNew = newStr.padStart(maxLength, ' ');
-  const paddedOld = oldStr.padStart(maxLength, ' ');
-
-  for (let i = 0; i < maxLength; i++) {
-    let slot = container.children[i];
-    if (!slot) {
-      slot = document.createElement('div');
-      slot.className = 'digit-slot';
-      container.appendChild(slot);
-    }
-
-    if (paddedOld[i] === paddedNew[i] && slot.children.length > 0) continue;
-
-    const reel = document.createElement('div');
-    reel.className = 'digit-reel';
-
-    const oldDigitSpan = document.createElement('span');
-    oldDigitSpan.className = 'digit';
-    oldDigitSpan.textContent = paddedOld[i] === ' ' ? '\u00A0' : paddedOld[i];
-
-    const newDigitSpan = document.createElement('span');
-    newDigitSpan.className = 'digit';
-    newDigitSpan.textContent = paddedNew[i] === ' ' ? '\u00A0' : paddedNew[i];
-
-    const isIncreasing = paddedNew[i] > paddedOld[i];
-
-    if (isIncreasing) {
-      reel.appendChild(oldDigitSpan);
-      reel.appendChild(newDigitSpan);
-      reel.classList.add('slide-up');
-    } else {
-      reel.appendChild(newDigitSpan);
-      reel.appendChild(oldDigitSpan);
-      reel.classList.add('slide-down');
-    }
-
-    slot.innerHTML = '';
-    slot.appendChild(reel);
-  }
-}
-
 // --- Event Listeners Setup ---
 
 // Theme Toggle
-let userHasThemePreference = false; // Will be set by main.js
+let userHasThemePreference = storedThemePreference != null;
 if (themeToggle) {
   themeToggle.addEventListener("click", () => {
     const isDark = document.body.dataset.theme === "dark";
@@ -234,7 +195,12 @@ applyDisplayMode(initialDisplayMode, { updateView: false });
 // Style Select
 if (styleSelect) {
   styleSelect.addEventListener("change", (event) => {
-    applyStyleSheet(event.target.value);
+    applyStyleSheet(event.target.value, { persist: true, updateControl: false });
+    // 切换样式后，给一点时间让 CSS 变量生效，然后更新计数器
+    setTimeout(() => {
+      if (filteredCounter) filteredCounter.update();
+      if (totalCounter) totalCounter.update();
+    }, 50);
   });
 }
 

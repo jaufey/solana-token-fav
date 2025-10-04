@@ -1,10 +1,11 @@
 import {
   applyTheme, applyView, applyDisplayMode, applyClipboardWatchState, applyStyleSheet,
   loadTrackedMints, saveTrackedMints,
-  getDisplayMode, getSortState, getFilterState, setSortState, setFilterState
+  getDisplayMode, getSortState, getFilterState, setSortState, setFilterState,
+  loadClipboardWatchPreference, getClipboardWatchState
 } from './ui-state.js';
 import { fetchTokenInfos, fetchTokenPrices } from './api.js';
-import { showToast, closeActiveToast, isCleanupToastActive, showFeedback, clearFeedback, updateAnimatedCounter } from './ui-interactions.js';
+import { showToast, closeActiveToast, isCleanupToastActive, showFeedback, clearFeedback } from './ui-interactions.js';
 
 
 
@@ -27,8 +28,9 @@ const sortDirectionButton = document.getElementById("sort-direction");
 const filterMcapSelect = document.getElementById("filter-mcap");
 const filterGraduationSelect = document.getElementById("filter-graduation");
 const tokenCounter = document.getElementById("token-counter");
-const bgFilteredCountEl = document.getElementById("bg-filtered-count");
-const bgTotalCountEl = document.getElementById("bg-total-count");
+const tokenCounterContainer = document.getElementById("token-counter-container");
+const filteredTokenCounterEl = document.getElementById("filtered-token-counter");
+const totalTokenCounterEl = document.getElementById("total-token-counter");
 const addTokenButton = document.getElementById('add-token-button');
 const addTokenPopover = document.getElementById('add-token-popover');
 const searchTokenButton = document.getElementById('search-token-button');
@@ -40,9 +42,50 @@ const previousPrices = new Map();
 let trackedMints = loadTrackedMints();
 let latestSnapshot = [];
 let searchQuery = '';
-let isClipboardWatchActive = false;
 let isCleanupModeActive = false;
 let tokensToDelete = [];
+
+export let filteredCounter = null;
+export let totalCounter = null;
+
+if (typeof Counter !== 'undefined' && filteredTokenCounterEl && totalTokenCounterEl) {
+  const counterOptions = {
+    fontSize: 120, // 大幅增加字体大小
+    digitHeight: 130, // 相应增加数字容器高度
+    fadeHeight: 30, // 增加渐变遮罩的高度
+    duration: 1200, // 延长动画时间，使其更平缓
+    digitGap: -15, // 调整间距以适应大字体
+    easing: "easeOutElastic(1, .8)"
+  };
+  filteredCounter = new Counter(filteredTokenCounterEl, counterOptions);
+  totalCounter = new Counter(totalTokenCounterEl, counterOptions);
+}
+
+const REFRESH_INTERVAL_STORAGE_KEY = 'solana-token-favs:refresh-interval';
+
+function loadRefreshInterval() {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    return window.localStorage.getItem(REFRESH_INTERVAL_STORAGE_KEY);
+  } catch (error) {
+    console.warn('读取刷新间隔失败', error);
+    return null;
+  }
+}
+
+function saveRefreshInterval(value) {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    if (value == null) {
+      window.localStorage.removeItem(REFRESH_INTERVAL_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(REFRESH_INTERVAL_STORAGE_KEY, String(value));
+    }
+  } catch (error) {
+    console.warn('保存刷新间隔失败', error);
+  }
+}
+
 
 let lastClipboardText = null;
 let clipboardReadInFlight = false;
@@ -353,38 +396,38 @@ function applySearchFilter(tokens, query) {
 export function updateTokenView() {
   let processedTokens = applyFilters(latestSnapshot);
 
-  const totalUniqueCount = latestSnapshot.length > 0
-    ? new Set(latestSnapshot.map((token) => token.mint)).size
-    : 0;
-  const filteredUniqueCount = processedTokens.length > 0
-    ? new Set(processedTokens.map((token) => token.mint)).size
-    : 0;
+  const uniqueMints = new Set(
+    latestSnapshot
+      .map((token) => (typeof token?.mint === 'string' ? token.mint : null))
+      .filter((mint) => mint)
+  );
+  const totalCount = uniqueMints.size;
+  const filteredUniqueMints = new Set(
+    processedTokens
+      .map((token) => (typeof token?.mint === 'string' ? token.mint : null))
+      .filter((mint) => mint)
+  );
+  const filteredCount = filteredUniqueMints.size;
 
-  const totalCount = totalUniqueCount;
-  const filteredCount = Math.min(filteredUniqueCount, totalCount);
-
-  if (tokenCounter) {
+  if (tokenCounterContainer) {
     if (totalCount > 0) {
-      tokenCounter.textContent = `${filteredCount} / ${totalCount}`;
-      tokenCounter.hidden = false;
+      if (filteredCounter && totalCounter) {
+        filteredCounter.setValue(filteredCount);
+        totalCounter.setValue(totalCount);
+      } else if (tokenCounter) { // Fallback for old element
+        tokenCounter.textContent = `${filteredCount} / ${totalCount}`;
+      }
+      tokenCounterContainer.hidden = false;
     } else {
-      tokenCounter.hidden = true;
+      tokenCounterContainer.hidden = true;
     }
-  }
-
-  if (bgFilteredCountEl) {
-    bgFilteredCountEl.textContent = String(filteredCount);
-    bgFilteredCountEl.dataset.value = String(filteredCount);
-  }
-  if (bgTotalCountEl) {
-    bgTotalCountEl.textContent = String(totalCount);
-    bgTotalCountEl.dataset.value = String(totalCount);
   }
 
   processedTokens = applySort(processedTokens);
 
   const filtered = processedTokens; // for clarity
   const canAnimate = filtered.length <= VIEW_TRANSITION_CARD_LIMIT && shouldUseViewTransition();
+
   if (typeof document.startViewTransition === "function" && canAnimate) {
     document.startViewTransition(() => renderTokens(filtered, { canAnimate }));
     return;
@@ -896,7 +939,7 @@ const shouldAutoFocusSearch = (event) => {
 };
 
 const handlePageActivation = () => {
-  if (isDocumentVisible() && isClipboardWatchActive && !isCleanupModeActive) {
+  if (isDocumentVisible() && getClipboardWatchState() && !isCleanupModeActive) {
     void tryImportMintsFromClipboard();
   }
 };
@@ -908,7 +951,7 @@ if (typeof document !== 'undefined' && document.addEventListener) {
   document.addEventListener('visibilitychange', handlePageActivation, false);
 }
 
-if (isDocumentVisible() && isClipboardWatchActive) {
+if (isDocumentVisible() && getClipboardWatchState()) {
   void tryImportMintsFromClipboard();
 }
 
@@ -955,7 +998,8 @@ function updateCleanupButtonState(isActive) {
     removeDeadButton.classList.add('is-active');
     removeDeadButton.title = '确认删除';
     if (useTag) useTag.setAttribute('href', '#confirm-path');
-    showToast(`再次点击确认删除 ${tokensToDelete.length} 个 Token，或点击其他地方取消`, 'info', { duration: 0, type: 'cleanup-prompt' });
+    const message = `找到 ${tokensToDelete.length} 个不活跃 Token。<br><small>(标准：市值 &lt; $20k 或无价格)</small><br>再次点击确认删除，或点击其他地方取消。`;
+    showToast(message, 'info', { duration: 0, type: 'cleanup-prompt' });
   } else {
     removeDeadButton.dataset.cleanupActive = 'false';
     removeDeadButton.classList.remove('is-active');
@@ -1003,7 +1047,7 @@ if (removeDeadButton) {
       trackedMints = trackedMints.filter(mint => !deadMints.has(mint));
       saveTrackedMints(trackedMints);
       latestSnapshot = latestSnapshot.filter(token => !deadMints.has(token.mint));
-      
+
       const count = tokensToDelete.length;
       cancelCleanupMode(); // 退出清理模式并刷新视图
       showToast(`已成功移除 ${count} 个不活跃的 Token`, 'success');
@@ -1024,7 +1068,7 @@ if (removeDeadButton) {
     });
 
     if (tokensToDelete.length === 0) {
-      showToast('未发现不活跃的 Token', 'info');
+      showToast('未发现不活跃的 Token<br><small>(标准：市值 &lt; $20k 或无价格)</small>', 'info');
       tokensToDelete = [];
       return;
     }
@@ -1181,9 +1225,13 @@ refreshButton.addEventListener("click", () => {
 });
 
 refreshSelect.addEventListener("change", () => {
+  const newInterval = refreshSelect.value;
+  saveRefreshInterval(newInterval);
   scheduleRefresh();
   refresh();
 });
+
+restoreUiControls();
 
 refresh().then(() => {
   scheduleRefresh();
@@ -1239,6 +1287,43 @@ document.addEventListener("click", (event) => {
   }
 });
 
+// 在页面加载时恢复UI控件的状态
+function restoreUiControls() {
+  // 恢复排序控件
+  const currentSort = getSortState();
+  if (sortBySelect) sortBySelect.value = currentSort.by;
+  if (sortDirectionButton) {
+    sortDirectionButton.dataset.direction = currentSort.direction;
+    const label = currentSort.direction === "asc" ? "切换为降序" : "切换为升序";
+    sortDirectionButton.setAttribute("aria-label", label);
+    sortDirectionButton.setAttribute("title", label);
+  }
+
+  // 恢复筛选控件
+  const currentFilters = getFilterState();
+  if (filterMcapSelect) filterMcapSelect.value = currentFilters.mcap;
+  if (filterGraduationSelect) filterGraduationSelect.value = currentFilters.graduation;
+}
+// 在页面加载时恢复剪贴板监听和刷新间隔设置
+const storedClipboardWatchPreference = loadClipboardWatchPreference();
+applyClipboardWatchState(storedClipboardWatchPreference);
+
+if (refreshSelect) {
+  const storedRefreshInterval = loadRefreshInterval();
+  if (storedRefreshInterval) {
+    const options = Array.from(refreshSelect.options);
+    const matchedOption = options.find((option) => option.value === storedRefreshInterval);
+    if (matchedOption) {
+      refreshSelect.value = storedRefreshInterval;
+    } else {
+      const parsed = Number(storedRefreshInterval);
+      const minutes = Number.isFinite(parsed) ? Math.round(parsed / 60000) : null;
+      const label = minutes && minutes > 0 ? `${minutes} 分钟` : `${storedRefreshInterval} ms`;
+      const customOption = new Option(label, storedRefreshInterval, true, true);
+      refreshSelect.add(customOption);
+    }
+  }
+}
 // 吸顶工具栏状态检测
 const stickyWrapper = document.querySelector('.sticky-wrapper');
 const sentinel = document.querySelector('.sticky-sentinel'); // This now refers to the new, independent sentinel

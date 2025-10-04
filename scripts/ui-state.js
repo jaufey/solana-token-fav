@@ -11,6 +11,8 @@ const DISPLAY_STORAGE_KEY = "solana-token-favs:display";
 const CLIPBOARD_WATCH_STORAGE_KEY = "solana-token-favs:clipboardWatch";
 const STYLE_STORAGE_KEY = "solana-token-favs:style";
 const STORAGE_KEY = "solana-token-favs:mints";
+const SORT_STATE_STORAGE_KEY = "solana-token-favs:sort";
+const FILTER_STATE_STORAGE_KEY = "solana-token-favs:filter";
 
 const STYLE_OPTIONS = [
   "styles.css",
@@ -27,8 +29,8 @@ const clipboardToggleButton = document.getElementById("clipboard-toggle-button")
 const styleSelect = document.getElementById("style-select");
 const styleSheetLink = document.getElementById("app-style-sheet");
 
-let sortState = { by: "default", direction: "desc" };
-let filterState = { mcap: "all", graduation: "all" };
+let sortState = loadSortState();
+let filterState = loadFilterState();
 let displayMode = 'mcap';
 let isClipboardWatchActive = false;
 
@@ -209,19 +211,56 @@ export function saveTrackedMints(mints) {
   savePreference(STORAGE_KEY, JSON.stringify(mints));
 }
 
-// --- Sort & Filter State ---
+// --- Sort State ---
+function loadSortState() {
+  const defaultState = { by: "default", direction: "desc" };
+  const raw = loadPreference(SORT_STATE_STORAGE_KEY);
+  if (!raw) return defaultState;
+  try {
+    const parsed = JSON.parse(raw);
+    // 确保加载的数据结构是正确的
+    return { ...defaultState, ...parsed };
+  } catch (e) {
+    console.warn("读取排序状态失败", e);
+    return defaultState;
+  }
+}
+
+function saveSortState(state) {
+  savePreference(SORT_STATE_STORAGE_KEY, JSON.stringify(state));
+}
+
 export function getSortState() {
   return { ...sortState };
 }
 
 export function setSortState(newState) {
   sortState = { ...sortState, ...newState };
+  saveSortState(sortState);
 }
 
+// --- Filter State ---
+function loadFilterState() {
+  const defaultState = { mcap: "all", graduation: "all" };
+  const raw = loadPreference(FILTER_STATE_STORAGE_KEY);
+  if (!raw) return defaultState;
+  try {
+    const parsed = JSON.parse(raw);
+    return { ...defaultState, ...parsed };
+  } catch (e) {
+    console.warn("读取筛选状态失败", e);
+    return defaultState;
+  }
+}
+
+function saveFilterState(state) {
+  savePreference(FILTER_STATE_STORAGE_KEY, JSON.stringify(state));
+}
 export function getFilterState() {
   return { ...filterState };
 }
 
 export function setFilterState(newState) {
   filterState = { ...filterState, ...newState };
+  saveFilterState(filterState);
 }

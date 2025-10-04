@@ -1,0 +1,22 @@
+<div id="counter"></div>
+
+<!-- anime.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+<script src="./counter.js"></script>
+<script>
+  const counter = new Counter(document.getElementById("counter"), {
+    fontSize: 60,
+    digitHeight: 70,
+    fadeHeight: 20,
+    duration: 800,
+    // easing: "easeOutExpo",  
+    easing: "easeOutElastic(1, .8)",  
+  });
+
+  let value = 0;
+  setInterval(() => {
+    value += Math.floor(Math.random() * 50);
+    console.log(`Setting counter to: ${value}`);
+    counter.setValue(value);
+  }, 2000);
+</script>

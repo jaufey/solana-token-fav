@@ -83,51 +83,6 @@ body {
   padding: 0 1rem 3rem;
 }
 
-.background-counter {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: auto;
-  transform-origin: top right;
-  transform: translateY(38%) rotate(10deg);
-  font-size: clamp(5rem, 11vw, 9rem);
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.05);
-  z-index: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.1em;
-}
-
-.digit-container {
-  display: flex;
-}
-
-.digit-slot {
-  height: 1em;
-  overflow: hidden;
-}
-
-.digit-reel {
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-}
-
-.digit-reel.slide-up {
-  transform: translateY(-50%);
-}
-
-.digit-reel.slide-down {
-  transform: translateY(0);
-}
-
-body[data-theme="light"] .background-counter {
-  color: rgba(0, 0, 0, 0.04);
-}
 
 .app-header {
   position: relative;
@@ -338,6 +293,31 @@ body[data-theme="light"] .background-counter {
   border: 1px solid var(--glass-border);
   white-space: nowrap;
   backdrop-filter: blur(var(--glass-blur));
+}
+
+.token-counter-container {
+position: fixed;
+  top: 2rem;       /* 距离顶部 */
+  right: 2rem;     /* 距离右侧 */
+  z-index: 0;
+  display: flex;
+  align-items: center;
+gap: 0.5rem;
+  /* 移除容器自身样式 */
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 0;
+  opacity: 0.12; /* 在玻璃态下可以稍微亮一点 */
+  pointer-events: none; /* 穿透鼠标事件 */
+  transform: rotate(15deg); /* 旋转15度 */
+  transform-origin: top right; /* 以右上角为轴心旋转 */
+}
+
+.token-counter-container .counter-separator {
+  font-size: 8rem; /* 巨大的分隔符 */
+  font-weight: 200;
 }
 
 /* --- Glassmorphism Select/Dropdown Style --- */
@@ -601,6 +581,11 @@ body[data-theme="light"] .background-counter {
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: 0 4px 10px var(--glass-shadow);
 }
+
+.clipboard-trigger.is-active {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
 .remove-dead-trigger svg use {
   transition: d 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -787,11 +772,12 @@ body[data-theme="light"] .background-counter {
 /* --- Glassmorphism Card Style --- */
 .token-card {
   position: relative;
+  /* position: relative; 已经存在，作为删除按钮的定位上下文 */
   background: var(--card-bg);
   /* Light, semi-transparent border */
   border: 1px solid var(--glass-border);
   border-radius: 14px;
-  padding: 2.8rem 0.95rem 0.95rem;
+  padding: 2.8rem 0.95rem 0.95rem; /* 调整顶部内边距 */
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -811,7 +797,7 @@ body[data-theme="light"] .background-counter {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 22px;
+  border-radius: 14px; /* 调整圆角 */
   overflow: hidden;
   /* Image border is slightly more opaque */
   background: var(--surface-2); 
@@ -964,8 +950,6 @@ body[data-view="compact"] .token-card:hover .token-remove {
 .token-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
 }
 
 .token-main {
@@ -977,8 +961,8 @@ body[data-view="compact"] .token-card:hover .token-remove {
 }
 
 .token-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;   /* 调整图片尺寸 */
+  height: 40px;  /* 调整图片尺寸 */
   border-radius: 12px;
   border: none;
   background: var(--surface-2);
@@ -987,7 +971,7 @@ body[data-view="compact"] .token-card:hover .token-remove {
 
 .token-title {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 移除 align-items: center */
   gap: 0.2rem;
   min-width: 0;
 }
@@ -996,6 +980,9 @@ body[data-view="compact"] .token-card:hover .token-remove {
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.2;
+  text-align: center;     /* 只居中 h2 (symbol) */
+  width: 100%;            /* 确保 h2 占满宽度以便居中 */
+  margin-top: 0.5rem;     /* 调整顶部间距以获得更好的视觉平衡 */
 }
 
 .token-title .symbol {
@@ -1061,6 +1048,9 @@ body[data-view="compact"] .token-card:hover .token-remove {
 
 /* --- Glassmorphism Remove Button Style --- */
 .token-remove {
+  position: absolute;
+  top: 0.5rem;        /* 相对于卡片顶部定位 */
+  right: 0.5rem;      /* 相对于卡片右侧定位 */
   background: var(--surface-1);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
